@@ -122,7 +122,7 @@ export default function DashboardProperties() {
   // Get image URL
   const getImageUrl = (image: string) => {
     if (image.startsWith('http')) return image;
-    return import.meta.VITE_APP_URL + '/uploads/properties/' + image;
+    return 'https://uptrendtrader.com/realtor' + '/uploads/properties/' + image;
   };
 
 

@@ -234,7 +234,7 @@ export default function AdminKYC() {
   // Build document URL
   const getDocumentUrl = (url: string) => {
     if (url.startsWith('http')) return url;
-    return `${import.meta.VITE_APP_URL || ''}/uploads/documents/${url}`;
+    return `${ 'https://uptrendtrader.com/realtor'}/uploads/documents/${url}`;
   };
 
   return (

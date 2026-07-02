@@ -74,7 +74,7 @@ export default function PropertyCard({
           {/* Image */}
           {image ? (
             <img 
-              src={import.meta.VITE_APP_URL + '/uploads/properties/' +image} 
+              src={'https://uptrendtrader.com/realtor' + '/uploads/properties/' +image} 
               alt={title} 
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               onError={(e) => {
