@@ -231,7 +231,7 @@ export default function PropertyDetail() {
             <div className="aspect-[16/9] bg-muted relative">
               {images.length > 0 ? (
                 <img 
-                  src={import.meta.env.VITE_APP_URL + '/uploads/properties/' +images[activeImage]} 
+                  src={process.env.VITE_APP_URL + '/uploads/properties/' +images[activeImage]} 
                   alt={property.title} 
                   className="w-full h-full object-cover"
                   onError={(e) => {
@@ -264,7 +264,7 @@ export default function PropertyDetail() {
                     }`}
                   >
 
-                    <img src={import.meta.env.VITE_APP_URL + '/uploads/properties/' +img} alt={`${property.title} - ${i + 1}`} className="w-full h-full object-cover" />
+                    <img src={process.env.VITE_APP_URL + '/uploads/properties/' +img} alt={`${property.title} - ${i + 1}`} className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>

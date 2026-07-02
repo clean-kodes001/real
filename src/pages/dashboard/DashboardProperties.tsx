@@ -122,15 +122,9 @@ export default function DashboardProperties() {
   // Get image URL
   const getImageUrl = (image: string) => {
     if (image.startsWith('http')) return image;
-    return import.meta.env.VITE_APP_URL + '/uploads/properties/' + image;
+    return process.env.VITE_APP_URL + '/uploads/properties/' + image;
   };
 
-  // Load more / pagination
-  function loadMore() {
-    if (pagination.page < pagination.pages) {
-      fetchProperties(pagination.page + 1);
-    }
-  }
 
   return (
     <DashboardLayout>

@@ -234,7 +234,7 @@ export default function AdminKYC() {
   // Build document URL
   const getDocumentUrl = (url: string) => {
     if (url.startsWith('http')) return url;
-    return `${import.meta.env.VITE_APP_URL || ''}/uploads/documents/${url}`;
+    return `${process.env.VITE_APP_URL || ''}/uploads/documents/${url}`;
   };
 
   return (

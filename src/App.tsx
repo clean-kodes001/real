@@ -166,7 +166,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+        <WouterRouter base={process.env.BASE_URL?.replace(/\/$/, "")}>
           <Router />
         </WouterRouter>
         <Toaster
