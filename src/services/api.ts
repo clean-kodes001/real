@@ -45,7 +45,7 @@ export class ApiError extends Error {
     hasFieldErrors(): boolean {
       return !!this.errors && Object.keys(this.errors).length > 0;
     }
-  
+   
     /**
      * Convert to string for logging
      */
