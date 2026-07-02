@@ -36,8 +36,7 @@ export const useAuth = create<AuthState>()(
       login: async (email: string, password: string) => {
         try {
           const response = await AuthAPI.login(email, password);
-          const { access_token, refresh_token, user } = response.data;
-          
+          const { access_token, refresh_token, user } = response.data;          
           localStorage.setItem('access_token', access_token);
           localStorage.setItem('refresh_token', refresh_token);
           

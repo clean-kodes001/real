@@ -3,8 +3,7 @@
     "outputDirectory": "dist",
     "routes": [
       {
-        "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|json|woff|woff2|ttf|eot|map))",
-        "headers": { "Cache-Control": "public, max-age=31536000, immutable" },
+        "src": "/(.*\\.(png|jpg|jpeg|gif|svg|ico|json|woff|woff2|ttf|eot|map|js|css))",
         "dest": "/$1"
       },
       {
