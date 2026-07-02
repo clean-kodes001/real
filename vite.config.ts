@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
-const port = Number(process.env.PORT) || 5173;
+const port = Number(import.meta.PORT) || 5173;
 
 export default defineConfig({
   plugins: [

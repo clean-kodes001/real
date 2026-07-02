@@ -122,7 +122,7 @@ export default function DashboardProperties() {
   // Get image URL
   const getImageUrl = (image: string) => {
     if (image.startsWith('http')) return image;
-    return process.env.VITE_APP_URL + '/uploads/properties/' + image;
+    return import.meta.VITE_APP_URL + '/uploads/properties/' + image;
   };
 
 

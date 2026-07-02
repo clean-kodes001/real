@@ -45,7 +45,7 @@ export class ApiError extends Error {
     hasFieldErrors(): boolean {
       return !!this.errors && Object.keys(this.errors).length > 0;
     }
-   
+  
     /**
      * Convert to string for logging
      */
@@ -57,7 +57,7 @@ export class ApiError extends Error {
   // ============ Complete API Client ============
   import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
   
-  const API_URL = process.env.VITE_API_URL || 'http://localhost:8000/realtor/api';
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/realtor/api';
   
   // ============ Types ============
   export interface ApiResponse<T = any> {
