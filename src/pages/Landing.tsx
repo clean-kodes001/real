@@ -72,7 +72,7 @@ const reviews: Review[] = [
     name: "Chidi Okonkwo",
     role: "Buyer",
     rating: 5,
-    comment: "MyRealtor made buying my first home in Lagos seamless. The escrow service gave me peace of mind.",
+    comment: "PlotWise made buying my first home in Lagos seamless. The escrow service gave me peace of mind.",
     date: "2 months ago"
   },
   {
@@ -88,7 +88,7 @@ const reviews: Review[] = [
     name: "Dr. Emeka Okafor",
     role: "Lawyer",
     rating: 5,
-    comment: "The platform makes legal due diligence easy. I've handled over 50 transactions on MyRealtor.",
+    comment: "The platform makes legal due diligence easy. I've handled over 50 transactions on PlotWise.",
     date: "1 month ago"
   },
   {
@@ -117,7 +117,7 @@ const faqs: FAQ[] = [
   },
   {
     id: 2,
-    question: "Is MyRealtor free to use?",
+    question: "Is PlotWise free to use?",
     answer: "Creating an account and browsing properties is completely free. We charge a small commission (2.5%) on successful transactions which is included in the escrow fee."
   },
   {
@@ -379,7 +379,7 @@ export default function Landing() {
       {/* Features */}
       <section className="py-20 max-w-6xl mx-auto px-6">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-display font-bold">Why Choose MyRealtor?</h2>
+          <h2 className="text-3xl font-display font-bold">Why Choose PlotWise?</h2>
           <p className="text-muted-foreground mt-2">Everything you need for a safe, smooth property deal</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -513,7 +513,7 @@ export default function Landing() {
               Ready to Find Your Dream Property?
             </h2>
             <p className="text-primary-foreground/80 text-lg mb-8 max-w-lg mx-auto">
-              Join thousands of Nigerians who trust MyRealtor for safe, transparent real estate transactions.
+              Join thousands of Nigerians who trust PlotWise for safe, transparent real estate transactions.
             </p>
             <Link href="/auth/register">
               <button className="px-8 py-4 bg-primary-foreground text-primary font-bold rounded-2xl hover:opacity-90 transition-opacity text-lg">

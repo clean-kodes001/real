@@ -71,7 +71,7 @@ export default function Login() {
           className="w-full max-w-sm"
         >
           <Link href="/" className="flex justify-center mb-8">
-            <img src='https://uptrendtrader.com/realtor/uploads/logo.png' alt="MyRealtor" className="h-10 w-auto" />
+            <img src='https://uptrendtrader.com/realtor/uploads/logo.png' alt="PlotWise" className="h-10 w-auto" />
           </Link>
 
           <h1 className="text-2xl font-display font-bold text-center mb-1">Sign In</h1>

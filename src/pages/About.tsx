@@ -21,7 +21,7 @@ export default function About() {
     <PublicLayout>
       <div className="max-w-4xl mx-auto px-6 py-16">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-16">
-          <h1 className="text-5xl font-display font-bold mb-4">About MyRealtor</h1>
+          <h1 className="text-5xl font-display font-bold mb-4">About PlotWise</h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             We're building Nigeria's most trusted real estate platform — where every transaction is safe, transparent, and legally protected.
           </p>
@@ -30,7 +30,7 @@ export default function About() {
         <section className="mb-16">
           <h2 className="text-2xl font-display font-bold mb-4">Our Mission</h2>
           <p className="text-muted-foreground leading-relaxed">
-            MyRealtor was founded with a single mission: to make property transactions in Nigeria safe for everyone. We've seen too many Nigerians lose money to fraudulent listings and unverified agents. By combining verified listings, secure escrow, expert legal support, and identity verification, we've built a platform where both buyers and sellers can transact with complete confidence.
+            PlotWise was founded with a single mission: to make property transactions in Nigeria safe for everyone. We've seen too many Nigerians lose money to fraudulent listings and unverified agents. By combining verified listings, secure escrow, expert legal support, and identity verification, we've built a platform where both buyers and sellers can transact with complete confidence.
           </p>
         </section>
 

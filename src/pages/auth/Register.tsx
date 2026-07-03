@@ -107,10 +107,10 @@ export default function Register() {
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
         <Link href="/" className="flex justify-center mb-8">
-          <img src={'https://uptrendtrader.com/realtor/uploads/logo.png'} alt="MyRealtor" className="h-10 w-auto" />
+          <img src={'https://uptrendtrader.com/realtor/uploads/logo.png'} alt="PlotWise" className="h-10 w-auto" />
         </Link>
         <h1 className="text-2xl font-display font-bold text-center mb-1">Create Account</h1>
-        <p className="text-center text-muted-foreground text-sm mb-8">Join thousands of Nigerians on MyRealtor</p>
+        <p className="text-center text-muted-foreground text-sm mb-8">Join thousands of Nigerians on PlotWise</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {field("full_name", "Full Name", "text", "solar:user-bold", "John Doe")}

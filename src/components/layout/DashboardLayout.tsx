@@ -174,7 +174,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <aside className="hidden md:flex flex-col fixed left-0 top-0 bottom-0 w-64 bg-sidebar z-40 pt-4 pb-6">
         <div className="px-4 mb-4">
           <Link href="/">
-            <img src={'https://uptrendtrader.com/realtor/uploads/logo.png'} alt="MyRealtor" className="h-8 w-auto" />
+            <img src={'https://uptrendtrader.com/realtor/uploads/logo.png'} alt="PlotWise" className="h-8 w-auto" />
           </Link>
         </div>
         {role && (
@@ -227,7 +227,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               className="fixed left-0 top-0 bottom-0 w-72 bg-sidebar z-50 flex flex-col pt-6 pb-6 md:hidden"
             >
               <div className="px-4 mb-4 flex items-center justify-between">
-                <img src={'https://uptrendtrader.com/realtor/uploads/logo.png'} alt="MyRealtor" className="h-8 w-auto" />
+                <img src={'https://uptrendtrader.com/realtor/uploads/logo.png'} alt="PlotWise" className="h-8 w-auto" />
                 <button onClick={() => setSidebarOpen(false)} className="p-1">
                   <Icon icon="solar:close-circle-bold" className="w-6 h-6 text-muted-foreground" />
                 </button>

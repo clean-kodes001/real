@@ -34,11 +34,11 @@ export default function PrivacyPolicy() {
             },
             {
               title: "7. Your Rights",
-              content: "You have the right to access, update, or delete your personal information. You can do this through your account settings or by contacting us at privacy@myrealtor.ng."
+              content: "You have the right to access, update, or delete your personal information. You can do this through your account settings or by contacting us at privacy@PlotWise.ng."
             },
             {
               title: "8. Contact Us",
-              content: "If you have questions about this Privacy Policy, please contact us at privacy@myrealtor.ng or write to: MyRealtor Ltd, 42 Broad Street, Lagos Island, Lagos, Nigeria."
+              content: "If you have questions about this Privacy Policy, please contact us at privacy@PlotWise.ng or write to: PlotWise Ltd, 42 Broad Street, Lagos Island, Lagos, Nigeria."
             },
           ].map(section => (
             <div key={section.title}>

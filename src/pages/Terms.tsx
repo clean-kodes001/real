@@ -10,7 +10,7 @@ export default function Terms() {
           {[
             {
               title: "1. Acceptance of Terms",
-              content: "By accessing and using MyRealtor, you accept and agree to be bound by these Terms and Conditions. If you do not agree, please do not use our platform."
+              content: "By accessing and using PlotWise, you accept and agree to be bound by these Terms and Conditions. If you do not agree, please do not use our platform."
             },
             {
               title: "2. User Accounts",
@@ -18,19 +18,19 @@ export default function Terms() {
             },
             {
               title: "3. Property Listings",
-              content: "Sellers are solely responsible for the accuracy of their listings. MyRealtor reserves the right to remove any listing that violates our policies. All listings must represent real, legally-owned properties."
+              content: "Sellers are solely responsible for the accuracy of their listings. PlotWise reserves the right to remove any listing that violates our policies. All listings must represent real, legally-owned properties."
             },
             {
               title: "4. Escrow Services",
-              content: "MyRealtor's escrow service holds funds securely during transactions. Funds are only released when both parties confirm transaction completion. Disputes are handled per our dispute resolution policy."
+              content: "PlotWise's escrow service holds funds securely during transactions. Funds are only released when both parties confirm transaction completion. Disputes are handled per our dispute resolution policy."
             },
             {
               title: "5. Lawyer Services",
-              content: "Lawyers listed on MyRealtor are independent professionals. MyRealtor is not responsible for legal advice given by listed lawyers. Users engage lawyers at their own discretion."
+              content: "Lawyers listed on PlotWise are independent professionals. PlotWise is not responsible for legal advice given by listed lawyers. Users engage lawyers at their own discretion."
             },
             {
               title: "6. Fees and Payments",
-              content: "MyRealtor charges a platform fee on completed transactions. Fee schedules are disclosed before transaction confirmation. All fees are non-refundable unless otherwise stated."
+              content: "PlotWise charges a platform fee on completed transactions. Fee schedules are disclosed before transaction confirmation. All fees are non-refundable unless otherwise stated."
             },
             {
               title: "7. Prohibited Activities",
@@ -38,7 +38,7 @@ export default function Terms() {
             },
             {
               title: "8. Limitation of Liability",
-              content: "MyRealtor shall not be liable for any indirect, incidental, special, or consequential damages arising from the use of our platform. Our total liability shall not exceed the fees paid by you in the past 12 months."
+              content: "PlotWise shall not be liable for any indirect, incidental, special, or consequential damages arising from the use of our platform. Our total liability shall not exceed the fees paid by you in the past 12 months."
             },
             {
               title: "9. Governing Law",
@@ -46,7 +46,7 @@ export default function Terms() {
             },
             {
               title: "10. Contact",
-              content: "For legal inquiries, contact us at legal@myrealtor.ng."
+              content: "For legal inquiries, contact us at legal@PlotWise.ng."
             },
           ].map(section => (
             <div key={section.title}>
