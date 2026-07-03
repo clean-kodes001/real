@@ -24,7 +24,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-background text-foreground flex">
       <aside className="hidden md:flex flex-col fixed left-0 top-0 bottom-0 w-60 bg-sidebar z-40 pt-4 pb-6">
         <div className="px-4 mb-4">
-          <Link href="/"><img src={'/logo.png'} alt="MyRealtor" className="h-7 w-auto" /></Link>
+          <Link href="/"><img src={'https://uptrendtrader.com/realtor/uploads/logo.png'} alt="MyRealtor" className="h-7 w-auto" /></Link>
           <div className="mt-2 px-2 py-1 rounded-lg bg-primary/10">
             <p className="text-xs font-semibold text-primary">Admin Panel</p>
           </div>

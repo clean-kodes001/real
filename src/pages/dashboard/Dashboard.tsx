@@ -18,6 +18,7 @@ import {
 } from "@/services/api";
 import { formatCurrency, timeAgo } from "@/lib/utils";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { useToast } from "@/hooks/use-toast";
 
 const chartData = [
   { month: "Jan", value: 1200000 },
@@ -36,7 +37,7 @@ export default function Dashboard() {
   const [escrows, setEscrows] = useState<EscrowTransaction[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [, navigate] = useLocation();
+   const [, navigate] = useLocation();
   const [stats, setStats] = useState({
     properties: 0,
     escrows: 0,
@@ -165,6 +166,7 @@ export default function Dashboard() {
 
   const handleRetry = () => {
     fetchDashboardData();
+
   };
 
   return (

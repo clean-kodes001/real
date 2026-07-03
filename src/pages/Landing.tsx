@@ -270,71 +270,9 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="py-16 bg-muted">
-        <div className="max-w-6xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8">
-          {stats.map((s, i) => (
-            <motion.div
-              key={s.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-              className="text-center"
-            >
-              <p className="text-3xl md:text-4xl font-display font-bold text-primary">{s.value}</p>
-              <p className="text-muted-foreground mt-1 text-sm">{s.label}</p>
-            </motion.div>
-          ))}
-        </div>
-      </section>
+     
 
-      {/* Account Types - How to Get Started */}
-      <section className="py-20 max-w-6xl mx-auto px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
-        >
-          <h2 className="text-3xl md:text-4xl font-display font-bold">How to Get Started</h2>
-          <p className="text-muted-foreground mt-2">Choose your account type and start your real estate journey</p>
-        </motion.div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {accountTypes.map((type, index) => (
-            <motion.div
-              key={type.id}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="group relative p-8 rounded-2xl bg-muted hover:bg-muted/70 transition-all hover:scale-[1.02] hover:shadow-xl"
-            >
-              <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${type.color} opacity-0 group-hover:opacity-5 transition-opacity`} />
-              
-              <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${type.color} flex items-center justify-center text-white mb-4`}>
-                <Icon icon={type.icon} className="w-7 h-7" />
-              </div>
-              
-              <h3 className="text-xl font-bold mb-2">{type.title}</h3>
-              <p className="text-sm text-muted-foreground mb-4">{type.description}</p>
-              
-              <ul className="space-y-2 mb-6">
-                {type.features.map((feature, idx) => (
-                  <li key={idx} className="flex items-center gap-2 text-sm">
-                    <Icon icon="solar:check-circle-bold" className="w-4 h-4 text-primary shrink-0" />
-                    <span className="text-muted-foreground">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-              
-              <Link href={type.href}>
-                <button className="w-full py-3 bg-primary/10 text-primary font-semibold rounded-xl hover:bg-primary hover:text-primary-foreground transition-all">
-                  {type.buttonText}
-                </button>
-              </Link>
-            </motion.div>
-          ))}
-        </div>
-      </section>
+    
 
       {/* Featured Properties */}
       <section className="py-20 bg-muted">

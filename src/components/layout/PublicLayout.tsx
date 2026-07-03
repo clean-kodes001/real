@@ -20,7 +20,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 h-16 flex items-center px-6 backdrop-blur-xl bg-background/80">
         <Link href="/" className="flex items-center gap-2 mr-8">
-          <img src={'/logo.png'} alt="MyRealtor" className="h-8 w-auto" />
+          <img src={'https://uptrendtrader.com/realtor/uploads/logo.png'} alt="MyRealtor" className="h-8 w-auto" />
         </Link>
         <div className="hidden md:flex items-center gap-6 flex-1">
           {navLinks.map(link => (
@@ -54,7 +54,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
                 Login
               </Link>
               <Link href="/auth/register" className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity">
-                Get Started
+                Join
               </Link>
             </>
           )}
@@ -65,7 +65,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
       <footer className="border-t border-border py-10 mt-20">
         <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <img src={'/logo.png'} alt="MyRealtor" className="h-8 w-auto mb-3" />
+            <img src={'https://uptrendtrader.com/realtor/uploads/logo.png'} alt="MyRealtor" className="h-8 w-auto mb-3" />
             <p className="text-sm text-muted-foreground">Nigeria's most trusted real estate platform.</p>
           </div>
           {[

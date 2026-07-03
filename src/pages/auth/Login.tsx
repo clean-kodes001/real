@@ -61,17 +61,7 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-background flex">
       {/* Left panel */}
-      <div className="hidden lg:flex lg:w-1/2 bg-primary items-center justify-center p-12 relative overflow-hidden">
-        <div className="absolute top-10 left-10 w-40 h-40 rounded-full bg-black/10 blur-2xl" />
-        <div className="absolute bottom-10 right-10 w-60 h-60 rounded-full bg-black/10 blur-3xl" />
-        <div className="relative text-primary-foreground text-center">
-          <Icon icon="solar:buildings-bold" className="w-24 h-24 mx-auto mb-6 opacity-80" />
-          <h2 className="text-3xl font-display font-bold mb-3">Welcome Back</h2>
-          <p className="text-primary-foreground/80 max-w-xs mx-auto">
-            Log in to access your dashboard, listings, escrows, and more.
-          </p>
-        </div>
-      </div>
+     
 
       {/* Right panel */}
       <div className="flex-1 flex items-center justify-center p-6">
@@ -81,7 +71,7 @@ export default function Login() {
           className="w-full max-w-sm"
         >
           <Link href="/" className="flex justify-center mb-8">
-            <img src="/logo.png" alt="MyRealtor" className="h-10 w-auto" />
+            <img src='https://uptrendtrader.com/realtor/uploads/logo.png' alt="MyRealtor" className="h-10 w-auto" />
           </Link>
 
           <h1 className="text-2xl font-display font-bold text-center mb-1">Sign In</h1>

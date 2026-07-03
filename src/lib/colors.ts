@@ -1,6 +1,6 @@
 export const colors = {
-  primary: "#C4FF00",
-  primaryHover: "#AEE500",
+  primary: "#8BC34A",        // Softer, more natural green
+  primaryHover: "#7CB342",   // Slightly darker for hover
   background: "#FFFFFF",
   foreground: "#000000",
   muted: "#F5F5F5",
@@ -13,8 +13,8 @@ export const colors = {
 };
 
 export const darkColors = {
-  primary: "#C4FF00",
-  primaryHover: "#AEE500",
+  primary: "#7CB342",        // Slightly darker for dark mode
+  primaryHover: "#689F38",
   background: "#000000",
   foreground: "#FFFFFF",
   muted: "#111111",

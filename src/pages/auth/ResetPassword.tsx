@@ -75,7 +75,7 @@ export default function ResetPassword() {
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-sm">
         <Link href="/" className="flex justify-center mb-8">
-          <img src={'/logo.png'} alt="MyRealtor" className="h-10 w-auto" />
+          <img src={'https://uptrendtrader.com/realtor/uploads/logo.png'} alt="MyRealtor" className="h-10 w-auto" />
         </Link>
         
         {resetSuccess ? (
