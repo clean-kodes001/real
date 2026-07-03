@@ -321,7 +321,7 @@ export default function Landing() {
                       <div className="aspect-[4/3] bg-muted flex items-center justify-center relative">
                         {p.images && p.images.length > 0 ? (
                           <img
-                            src={p.images[0]}
+                            src={'https://uptrendtrader.com/realtor/uploads/properties/'+p.images[0]}
                             alt={p.title}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             onError={(e) => {
@@ -331,6 +331,7 @@ export default function Landing() {
                         ) : (
                           <Icon icon="solar:buildings-bold" className="w-16 h-16 text-muted-foreground/20" />
                         )}
+                        
                         {p.status && (
                           <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-semibold backdrop-blur-sm bg-background/80">
                             {p.status.charAt(0).toUpperCase() + p.status.slice(1)}
