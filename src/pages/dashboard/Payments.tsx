@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Icon } from "@iconify/react";
 import toast from "react-hot-toast";
 import DashboardLayout from "@/components/layout/DashboardLayout";
@@ -8,10 +8,17 @@ import { PaymentAPI, ApiError } from "@/services/api";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 
 const statusColors: Record<string, string> = {
-  success: "bg-green-500/10 text-green-600",
-  pending: "bg-yellow-500/10 text-yellow-600",
-  failed: "bg-red-500/10 text-red-600",
-  refunded: "bg-blue-500/10 text-blue-600",
+  success: "text-green-500",
+  pending: "text-amber-500",
+  failed: "text-red-500",
+  refunded: "text-blue-500",
+};
+
+const statusBgColors: Record<string, string> = {
+  success: "bg-green-500/10",
+  pending: "bg-amber-500/10",
+  failed: "bg-red-500/10",
+  refunded: "bg-blue-500/10",
 };
 
 const statusIcons: Record<string, string> = {
@@ -30,13 +37,15 @@ interface Payment {
   created_at?: string;
   escrow_uuid?: string;
   transaction_id?: string;
+  payment_method?: string;
 }
 
 export default function Payments() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<string>('all');
+  const [selectedPeriod, setSelectedPeriod] = useState<'all' | 'month' | 'week'>('all');
+  const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -64,35 +73,65 @@ export default function Payments() {
     }
   }
 
-  // Get unique statuses for filter
+  // Get unique statuses
   const statuses = ['all', ...new Set(payments.map(p => p.status).filter(Boolean))];
 
   // Filter payments
-  const filteredPayments = payments
-    .filter(p => filter === 'all' ? true : p.status === filter)
-    .filter(p => {
-      if (!searchTerm) return true;
+  const filteredPayments = useMemo(() => {
+    let filtered = payments;
+
+    // Status filter
+    if (selectedStatus !== 'all') {
+      filtered = filtered.filter(p => p.status === selectedStatus);
+    }
+
+    // Period filter
+    if (selectedPeriod === 'week') {
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      filtered = filtered.filter(p => {
+        const date = new Date(p.paid_at || p.created_at || '');
+        return date >= weekAgo;
+      });
+    } else if (selectedPeriod === 'month') {
+      const monthAgo = new Date();
+      monthAgo.setMonth(monthAgo.getMonth() - 1);
+      filtered = filtered.filter(p => {
+        const date = new Date(p.paid_at || p.created_at || '');
+        return date >= monthAgo;
+      });
+    }
+
+    // Search
+    if (searchTerm) {
       const search = searchTerm.toLowerCase();
-      return (
+      filtered = filtered.filter(p => 
         p.reference?.toLowerCase().includes(search) ||
         p.uuid.toLowerCase().includes(search) ||
         p.transaction_id?.toLowerCase().includes(search)
       );
-    });
+    }
 
-  // Calculate totals
-  const totalPaid = payments
-    .filter(p => p.status === "success")
-    .reduce((s, p) => s + parseFloat(p.amount ?? "0"), 0);
+    return filtered;
+  }, [payments, selectedStatus, selectedPeriod, searchTerm]);
 
-  const totalPending = payments
-    .filter(p => p.status === "pending")
-    .reduce((s, p) => s + parseFloat(p.amount ?? "0"), 0);
-
-  const getStatusCount = (status: string) => {
-    if (status === 'all') return payments.length;
-    return payments.filter(p => p.status === status).length;
-  };
+  // Calculate metrics
+  const metrics = useMemo(() => {
+    const total = payments.reduce((s, p) => s + parseFloat(p.amount ?? "0"), 0);
+    const successful = payments.filter(p => p.status === "success");
+    const successfulTotal = successful.reduce((s, p) => s + parseFloat(p.amount ?? "0"), 0);
+    const pendingTotal = payments
+      .filter(p => p.status === "pending")
+      .reduce((s, p) => s + parseFloat(p.amount ?? "0"), 0);
+    
+    return {
+      total,
+      successfulTotal,
+      pendingTotal,
+      successfulCount: successful.length,
+      totalCount: payments.length,
+    };
+  }, [payments]);
 
   function openDetailModal(payment: Payment) {
     setSelectedPayment(payment);
@@ -104,291 +143,342 @@ export default function Payments() {
   }
 
   function getStatusColor(status: string): string {
-    return statusColors[status] || "bg-muted text-muted-foreground";
+    return statusColors[status] || "text-muted-foreground";
   }
+
+  function getStatusBgColor(status: string): string {
+    return statusBgColors[status] || "bg-muted";
+  }
+
+  // Group payments by date
+  const groupedPayments = useMemo(() => {
+    const groups: { [key: string]: Payment[] } = {};
+    
+    filteredPayments.forEach(payment => {
+      const date = new Date(payment.paid_at || payment.created_at || '');
+      const key = date.toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        month: 'long', 
+        day: 'numeric',
+        year: 'numeric'
+      });
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(payment);
+    });
+    
+    return groups;
+  }, [filteredPayments]);
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Header */}
-        <div>
-          <h1 className="text-2xl font-display font-bold">Payment History</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">Track all your transactions</p>
+        <div className="mb-8">
+          <h1 className="text-3xl font-light tracking-tight">Payments</h1>
+          <p className="text-muted-foreground text-sm font-light mt-1">
+            Track and manage your transactions
+          </p>
         </div>
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Metrics */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
           <motion.div 
-            initial={{ opacity: 0, y: 16 }} 
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="p-6 rounded-2xl bg-green-500/10 border border-green-500/20"
+            className="p-4 rounded-2xl bg-muted/50"
           >
-            <p className="text-sm text-green-600">Total Spent</p>
-            <p className="text-2xl font-bold text-green-600 mt-1">{formatCurrency(totalPaid)}</p>
-            <p className="text-xs text-green-600/70 mt-1">
-              {payments.filter(p => p.status === "success").length} successful transactions
-            </p>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Spent</p>
+            <p className="text-2xl font-light mt-1">{formatCurrency(metrics.successfulTotal)}</p>
           </motion.div>
-
+          
           <motion.div 
-            initial={{ opacity: 0, y: 16 }} 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="p-4 rounded-2xl bg-muted/50"
+          >
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Pending</p>
+            <p className="text-2xl font-light mt-1 text-amber-500">{formatCurrency(metrics.pendingTotal)}</p>
+          </motion.div>
+          
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="p-6 rounded-2xl bg-yellow-500/10 border border-yellow-500/20"
+            className="p-4 rounded-2xl bg-muted/50"
           >
-            <p className="text-sm text-yellow-600">Pending</p>
-            <p className="text-2xl font-bold text-yellow-600 mt-1">{formatCurrency(totalPending)}</p>
-            <p className="text-xs text-yellow-600/70 mt-1">
-              {payments.filter(p => p.status === "pending").length} pending transactions
-            </p>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Completed</p>
+            <p className="text-2xl font-light mt-1">{metrics.successfulCount}</p>
           </motion.div>
-
+          
           <motion.div 
-            initial={{ opacity: 0, y: 16 }} 
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="p-6 rounded-2xl bg-primary/10 border border-primary/20"
+            transition={{ delay: 0.15 }}
+            className="p-4 rounded-2xl bg-muted/50"
           >
-            <p className="text-sm text-primary">Total Transactions</p>
-            <p className="text-2xl font-bold text-primary mt-1">{payments.length}</p>
-            <p className="text-xs text-primary/70 mt-1">
-              {payments.filter(p => p.status === "failed").length} failed
-            </p>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total</p>
+            <p className="text-2xl font-light mt-1">{metrics.totalCount}</p>
           </motion.div>
         </div>
 
-        {/* Search & Filter */}
-        {!loading && payments.length > 0 && (
-          <div className="flex flex-col sm:flex-row gap-3">
-            {/* Search */}
-            <div className="relative flex-1">
-              <Icon 
-                icon="solar:magnifer-bold" 
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" 
-              />
-              <input
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search by reference or transaction ID..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-muted text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-2 focus:ring-primary transition-all"
-              />
-            </div>
-
-            {/* Refresh Button */}
-            <button
-              onClick={fetchPayments}
-              className="px-4 py-2.5 bg-muted hover:bg-muted/70 rounded-xl transition-colors text-sm flex items-center gap-2"
-            >
-              <Icon icon="solar:refresh-bold" className="w-4 h-4" />
-              Refresh
-            </button>
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          {/* Search */}
+          <div className="relative flex-1">
+            <Icon 
+              icon="solar:magnifer-bold" 
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" 
+            />
+            <input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search payments..."
+              className="w-full pl-9 pr-4 py-2 bg-muted/50 rounded-xl text-sm outline-none transition-colors focus:bg-muted placeholder:text-muted-foreground/60"
+            />
           </div>
-        )}
 
-        {/* Status Filter */}
-        {!loading && payments.length > 0 && (
-          <div className="flex flex-wrap gap-2">
+          {/* Period Filter */}
+          <div className="flex gap-1 bg-muted/50 p-1 rounded-xl">
+            {[
+              { value: 'all', label: 'All' },
+              { value: 'month', label: 'Month' },
+              { value: 'week', label: 'Week' },
+            ].map((period) => (
+              <button
+                key={period.value}
+                onClick={() => setSelectedPeriod(period.value as any)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  selectedPeriod === period.value
+                    ? 'bg-background text-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {period.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Status Filter */}
+          <div className="flex gap-1 bg-muted/50 p-1 rounded-xl overflow-x-auto">
             {statuses.map((status) => (
               <button
                 key={status}
-                onClick={() => setFilter(status)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium capitalize transition-all ${
-                  filter === status
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-muted-foreground hover:bg-muted/70'
+                onClick={() => setSelectedStatus(status)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
+                  selectedStatus === status
+                    ? 'bg-background text-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 {status === 'all' ? 'All' : status}
-                <span className="ml-1.5 text-xs opacity-70">
-                  ({getStatusCount(status)})
+                <span className="ml-1 text-muted-foreground/60">
+                  ({status === 'all' ? payments.length : payments.filter(p => p.status === status).length})
                 </span>
               </button>
             ))}
           </div>
-        )}
 
-        {/* Error State */}
-        {error && !loading && (
-          <div className="text-center py-20">
-            <Icon icon="solar:danger-triangle-bold" className="w-10 h-10 text-destructive mx-auto mb-3" />
-            <p className="text-muted-foreground">{error}</p>
+          <button
+            onClick={fetchPayments}
+            className="p-2 rounded-xl bg-muted/50 hover:bg-muted transition-colors"
+          >
+            <Icon icon="solar:refresh-bold" className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Content */}
+        {loading ? (
+          <div className="space-y-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <ListItemSkeleton key={i} />
+            ))}
+          </div>
+        ) : error ? (
+          <div className="text-center py-16">
+            <Icon icon="solar:danger-triangle-bold" className="w-8 h-8 text-destructive mx-auto mb-3" />
+            <p className="text-muted-foreground text-sm">{error}</p>
             <button
               onClick={fetchPayments}
-              className="mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition-opacity text-sm"
+              className="mt-4 px-6 py-2 bg-foreground text-background rounded-xl text-sm font-medium hover:opacity-80 transition-opacity"
             >
               Try Again
             </button>
           </div>
-        )}
-
-        {/* Loading State */}
-        {loading ? (
-          <div className="rounded-2xl bg-muted divide-y divide-border overflow-hidden">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <ListItemSkeleton key={i} />
-            ))}
-          </div>
         ) : filteredPayments.length === 0 ? (
-          // Empty State
-          <div className="text-center py-16 rounded-2xl bg-muted">
-            <Icon icon="solar:card-bold" className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-            <p className="font-semibold">
-              {filter === 'all' ? 'No payment history' : `No ${filter} payments`}
+          <div className="text-center py-16">
+            <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-4">
+              <Icon icon="solar:card-bold" className="w-6 h-6 text-muted-foreground/40" />
+            </div>
+            <p className="font-light text-muted-foreground">
+              {searchTerm || selectedStatus !== 'all' || selectedPeriod !== 'all' 
+                ? 'No matching payments found'
+                : 'No payments yet'}
             </p>
-            <p className="text-sm text-muted-foreground mt-1">
-              {filter === 'all' 
-                ? 'Transactions will appear here' 
-                : `You don't have any ${filter} payments`}
+            <p className="text-sm text-muted-foreground/60 mt-1">
+              {searchTerm || selectedStatus !== 'all' || selectedPeriod !== 'all'
+                ? 'Try adjusting your filters'
+                : 'Transactions will appear here'}
             </p>
-            {filter !== 'all' && (
-              <button
-                onClick={() => setFilter('all')}
-                className="mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition-opacity text-sm"
-              >
-                View All
-              </button>
-            )}
           </div>
         ) : (
-          // Payments List
-          <div className="rounded-2xl bg-muted overflow-hidden divide-y divide-border">
-            {filteredPayments.map((p, i) => (
-              <motion.div 
-                key={p.uuid} 
-                initial={{ opacity: 0 }} 
-                animate={{ opacity: 1 }} 
-                transition={{ delay: i * 0.04 }}
-                className="flex items-center gap-4 px-5 py-4 hover:bg-muted/50 transition-colors cursor-pointer"
-                onClick={() => openDetailModal(p)}
-              >
-                {/* Icon */}
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                  p.status === 'success' ? 'bg-green-500/10' :
-                  p.status === 'pending' ? 'bg-yellow-500/10' :
-                  p.status === 'failed' ? 'bg-red-500/10' :
-                  'bg-muted'
-                }`}>
-                  <Icon 
-                    icon={getStatusIcon(p.status || '')} 
-                    className={`w-5 h-5 ${
-                      p.status === 'success' ? 'text-green-500' :
-                      p.status === 'pending' ? 'text-yellow-500' :
-                      p.status === 'failed' ? 'text-red-500' :
-                      'text-muted-foreground'
-                    }`} 
-                  />
+          <div className="space-y-6">
+            {Object.entries(groupedPayments).map(([date, items]) => (
+              <div key={date}>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
+                  {date}
+                </p>
+                <div className="space-y-1">
+                  {items.map((payment, index) => (
+                    <motion.div
+                      key={payment.uuid}
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.03 }}
+                      onClick={() => openDetailModal(payment)}
+                      className="flex items-center gap-4 p-3 rounded-xl hover:bg-muted/30 transition-colors cursor-pointer group"
+                    >
+                      {/* Status Icon */}
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${getStatusBgColor(payment.status || '')}`}>
+                        <Icon 
+                          icon={getStatusIcon(payment.status || '')} 
+                          className={`w-4 h-4 ${getStatusColor(payment.status || '')}`} 
+                        />
+                      </div>
+                      
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">
+                          {payment.reference || `Payment #${payment.uuid.slice(-8)}`}
+                        </p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-xs text-muted-foreground">
+                            {formatDateTime(payment.paid_at || payment.created_at || '')}
+                          </span>
+                          {payment.transaction_id && (
+                            <>
+                              <span className="w-0.5 h-0.5 rounded-full bg-muted-foreground/30" />
+                              <span className="text-xs text-muted-foreground/60 font-mono">
+                                {payment.transaction_id.slice(0, 8)}...
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Amount & Status */}
+                      <div className="text-right shrink-0">
+                        <p className="text-sm font-medium">
+                          {payment.amount ? formatCurrency(parseFloat(payment.amount)) : "—"}
+                        </p>
+                        {payment.status && (
+                          <span className={`text-xs font-medium ${getStatusColor(payment.status)}`}>
+                            {payment.status}
+                          </span>
+                        )}
+                      </div>
+                      
+                      <Icon 
+                        icon="solar:arrow-right-bold" 
+                        className="w-4 h-4 text-muted-foreground/30 group-hover:text-muted-foreground transition-colors shrink-0" 
+                      />
+                    </motion.div>
+                  ))}
                 </div>
-                
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm font-mono truncate">
-                    {p.reference || `Payment #${p.uuid.slice(-8)}`}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {formatDateTime(p.paid_at || p.created_at || '')}
-                  </p>
-                  {p.transaction_id && (
-                    <p className="text-xs text-muted-foreground font-mono">
-                      TXN: {p.transaction_id.slice(0, 12)}...
-                    </p>
-                  )}
-                </div>
-                
-                {/* Amount & Status */}
-                <div className="flex flex-col items-end gap-1.5 shrink-0">
-                  <p className={`font-semibold text-sm ${
-                    p.status === 'success' ? 'text-green-600' :
-                    p.status === 'pending' ? 'text-yellow-600' :
-                    p.status === 'failed' ? 'text-red-600' :
-                    ''
-                  }`}>
-                    {p.amount ? formatCurrency(parseFloat(p.amount)) : "—"}
-                  </p>
-                  {p.status && (
-                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColor(p.status)}`}>
-                      {p.status}
-                    </span>
-                  )}
-                </div>
-                
-                <Icon icon="solar:arrow-right-bold" className="w-4 h-4 text-muted-foreground ml-2 shrink-0" />
-              </motion.div>
+              </div>
             ))}
           </div>
         )}
       </div>
 
-      {/* Payment Detail Modal */}
-      {showDetailModal && selectedPayment && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-background rounded-2xl max-w-md w-full p-6"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-display font-bold">Payment Details</h3>
-              <button 
-                onClick={() => setShowDetailModal(false)}
-                className="p-2 hover:bg-muted rounded-xl transition-colors"
-              >
-                <Icon icon="solar:close-bold" className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {/* Amount */}
-              <div className="text-center p-4 rounded-xl bg-muted">
-                <p className="text-sm text-muted-foreground">Amount</p>
-                <p className="text-3xl font-bold text-primary">
-                  {selectedPayment.amount ? formatCurrency(parseFloat(selectedPayment.amount)) : "—"}
-                </p>
-              </div>
-
-              {/* Details */}
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Reference</span>
-                  <span className="text-sm font-mono">{selectedPayment.reference || "—"}</span>
-                </div>
-                
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Status</span>
-                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColor(selectedPayment.status || '')}`}>
-                    {selectedPayment.status || "—"}
-                  </span>
+      {/* Detail Modal - Apple Style */}
+      <AnimatePresence>
+        {showDetailModal && selectedPayment && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
+              onClick={() => setShowDetailModal(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-sm mx-auto z-50"
+            >
+              <div className="bg-background rounded-2xl p-6">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-light">Payment Details</h3>
+                  <button 
+                    onClick={() => setShowDetailModal(false)}
+                    className="p-1 rounded-full hover:bg-muted/50 transition-colors"
+                  >
+                    <Icon icon="solar:close-bold" className="w-5 h-5" />
+                  </button>
                 </div>
 
-                {selectedPayment.transaction_id && (
+                {/* Amount */}
+                <div className="text-center py-4 mb-6 bg-muted/30 rounded-2xl">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Amount</p>
+                  <p className="text-3xl font-light mt-1">
+                    {selectedPayment.amount ? formatCurrency(parseFloat(selectedPayment.amount)) : "—"}
+                  </p>
+                  {selectedPayment.status && (
+                    <span className={`inline-block mt-2 text-xs font-medium ${getStatusColor(selectedPayment.status)}`}>
+                      {selectedPayment.status}
+                    </span>
+                  )}
+                </div>
+
+                {/* Details */}
+                <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Transaction ID</span>
-                    <span className="text-sm font-mono">{selectedPayment.transaction_id}</span>
+                    <span className="text-muted-foreground">Reference</span>
+                    <span className="font-mono font-light">{selectedPayment.reference || "—"}</span>
                   </div>
-                )}
 
-                {selectedPayment.escrow_uuid && (
+                  {selectedPayment.transaction_id && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Transaction ID</span>
+                      <span className="font-mono font-light text-xs">{selectedPayment.transaction_id}</span>
+                    </div>
+                  )}
+
+                  {selectedPayment.escrow_uuid && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Escrow</span>
+                      <span className="font-mono font-light text-xs">{selectedPayment.escrow_uuid.slice(0, 8)}...</span>
+                    </div>
+                  )}
+
                   <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Escrow</span>
-                    <span className="text-sm font-mono">{selectedPayment.escrow_uuid.slice(0, 8)}...</span>
+                    <span className="text-muted-foreground">Date</span>
+                    <span className="font-light">
+                      {formatDateTime(selectedPayment.paid_at || selectedPayment.created_at || '')}
+                    </span>
                   </div>
-                )}
 
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Date</span>
-                  <span className="text-sm">
-                    {formatDateTime(selectedPayment.paid_at || selectedPayment.created_at || '')}
-                  </span>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Payment ID</span>
+                    <span className="font-mono font-light text-xs">{selectedPayment.uuid.slice(0, 12)}...</span>
+                  </div>
                 </div>
 
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Payment ID</span>
-                  <span className="text-sm font-mono">{selectedPayment.uuid.slice(0, 12)}...</span>
-                </div>
+                {/* Action */}
+                <button
+                  onClick={() => setShowDetailModal(false)}
+                  className="w-full mt-6 py-3 bg-foreground text-background rounded-xl text-sm font-medium hover:opacity-80 transition-opacity"
+                >
+                  Close
+                </button>
               </div>
-            </div>
-          </motion.div>
-        </div>
-      )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </DashboardLayout>
   );
 }

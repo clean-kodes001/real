@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback, useMemo, memo } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Icon } from "@iconify/react";
@@ -44,6 +44,64 @@ const NIGERIAN_STATES = [
   "Rivers", "Sokoto", "Taraba", "Yobe", "Zamfara"
 ];
 
+// Memoized input component to prevent re-renders
+const FormField = memo(({ 
+  name, 
+  label, 
+  type = "text", 
+  placeholder = "",
+  required = false,
+  value,
+  onChange,
+  error,
+  apiError
+}: { 
+  name: string;
+  label: string; 
+  type?: string; 
+  placeholder?: string;
+  required?: boolean;
+  value: string;
+  onChange: (name: string, value: string) => void;
+  error?: string;
+  apiError?: string;
+}) => {
+  const hasError = error || apiError;
+  
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    if (type === "number") {
+      // Allow empty string or valid numbers only
+      if (val === "" || /^\d*\.?\d*$/.test(val)) {
+        onChange(name, val);
+      }
+    } else {
+      onChange(name, val);
+    }
+  }, [name, onChange, type]);
+
+  return (
+    <div>
+      <label className="block text-sm font-medium mb-1.5">
+        {label} {required && <span className="text-destructive">*</span>}
+      </label>
+      <input
+        type={type}
+        value={value}
+        onChange={handleChange}
+        placeholder={placeholder}
+        className={`w-full px-4 py-3 rounded-xl bg-muted text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-2 focus:ring-primary transition-all ${
+          hasError ? "ring-2 ring-destructive" : ""
+        }`}
+      />
+      {error && <p className="text-destructive text-xs mt-1">{error}</p>}
+      {apiError && !error && <p className="text-destructive text-xs mt-1">{apiError}</p>}
+    </div>
+  );
+});
+
+FormField.displayName = 'FormField';
+
 export default function CreateProperty() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
@@ -87,7 +145,8 @@ export default function CreateProperty() {
     );
   }
 
-  function validate() {
+  // ✅ Memoized validate function
+  const validate = useCallback(() => {
     const e: Partial<Record<keyof FormData, string>> = {};
     if (!form.title.trim()) e.title = "Title is required";
     if (!form.description.trim()) e.description = "Description is required";
@@ -100,12 +159,15 @@ export default function CreateProperty() {
     if (!form.property_type) e.property_type = "Property type is required";
     if (form.images.length === 0) e.images = "At least one image is required";
     return e;
-  }
+  }, [form]);
 
-  function handleChange(key: keyof FormData, value: string) {
+  // ✅ Memoized handlers with useCallback
+  const handleChange = useCallback((key: keyof FormData, value: string) => {
     setForm(prev => ({ ...prev, [key]: value }));
     // Clear client-side error
-    if (errors[key]) setErrors(e => ({ ...e, [key]: undefined }));
+    if (errors[key]) {
+      setErrors(e => ({ ...e, [key]: undefined }));
+    }
     // Clear API errors for this field
     if (apiErrors[key]) {
       setApiErrors(e => {
@@ -114,25 +176,9 @@ export default function CreateProperty() {
         return newErrors;
       });
     }
-  }
+  }, [errors, apiErrors]);
 
-  // ✅ FIX: Handle number inputs properly
-  function handleNumberChange(key: keyof FormData, value: string) {
-    // Allow empty string or valid numbers only
-    if (value === "" || /^\d*\.?\d*$/.test(value)) {
-      setForm(prev => ({ ...prev, [key]: value }));
-      if (errors[key]) setErrors(e => ({ ...e, [key]: undefined }));
-      if (apiErrors[key]) {
-        setApiErrors(e => {
-          const newErrors = { ...e };
-          delete newErrors[key];
-          return newErrors;
-        });
-      }
-    }
-  }
-
-  function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
 
@@ -162,7 +208,9 @@ export default function CreateProperty() {
         imagePreviews: [...prev.imagePreviews, ...validPreviews],
       }));
       // Clear image errors
-      if (errors.images) setErrors(e => ({ ...e, images: undefined }));
+      if (errors.images) {
+        setErrors(e => ({ ...e, images: undefined }));
+      }
       if (apiErrors.images) {
         setApiErrors(e => {
           const newErrors = { ...e };
@@ -171,27 +219,26 @@ export default function CreateProperty() {
         });
       }
     }
-  }
+  }, [errors, apiErrors]);
 
-  function removeImage(index: number) {
+  const removeImage = useCallback((index: number) => {
     setForm(prev => ({
       ...prev,
       images: prev.images.filter((_, i) => i !== index),
       imagePreviews: prev.imagePreviews.filter((_, i) => i !== index),
     }));
-  }
+  }, []);
 
-  // Convert image to base64 for API
-  function fileToBase64(file: File): Promise<string> {
+  const fileToBase64 = useCallback((file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = () => resolve(reader.result as string);
       reader.onerror = (error) => reject(error);
     });
-  }
+  }, []);
 
-  async function handleSubmit(e: React.FormEvent) {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validate form
@@ -270,58 +317,10 @@ export default function CreateProperty() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [form, validate, fileToBase64, navigate]);
 
-  function Field({ 
-    name, 
-    label, 
-    type = "text", 
-    placeholder = "",
-    required = false 
-  }: { 
-    name: keyof FormData; 
-    label: string; 
-    type?: string; 
-    placeholder?: string;
-    required?: boolean;
-  }) {
-    // Check if there are API errors for this field
-    const hasApiError = apiErrors[name] && apiErrors[name].length > 0;
-    const apiErrorMessage = hasApiError ? apiErrors[name][0] : null;
-    const hasError = errors[name] || hasApiError;
-    
-    const isNumberType = type === "number";
-    
-    return (
-      <div>
-        <label className="block text-sm font-medium mb-1.5">
-          {label} {required && <span className="text-destructive">*</span>}
-        </label>
-        <input
-          type={type}
-          value={form[name] as string}
-          onChange={(e) => {
-            if (isNumberType) {
-              handleNumberChange(name, e.target.value);
-            } else {
-              handleChange(name, e.target.value);
-            }
-          }}
-          placeholder={placeholder}
-          className={`w-full px-4 py-3 rounded-xl bg-muted text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-2 focus:ring-primary transition-all ${
-            hasError ? "ring-2 ring-destructive" : ""
-          }`}
-        />
-        {errors[name] && <p className="text-destructive text-xs mt-1">{errors[name]}</p>}
-        {apiErrorMessage && !errors[name] && (
-          <p className="text-destructive text-xs mt-1">{apiErrorMessage}</p>
-        )}
-      </div>
-    );
-  }
-
-  // ✅ Get display name for property type
-  function getPropertyTypeLabel(type: string): string {
+  // ✅ Memoized type label function
+  const getPropertyTypeLabel = useCallback((type: string): string => {
     const labels: Record<string, string> = {
       land: "Land",
       house: "House",
@@ -333,7 +332,41 @@ export default function CreateProperty() {
       mixed_use: "Mixed Use"
     };
     return labels[type] || type;
-  }
+  }, []);
+
+  // ✅ Memoize the property type buttons to prevent re-renders
+  const propertyTypeButtons = useMemo(() => {
+    return PROPERTY_TYPES.map(type => (
+      <button
+        key={type}
+        type="button"
+        onClick={() => handleChange("property_type", type)}
+        className={`py-2.5 rounded-xl text-sm font-medium capitalize transition-all ${
+          form.property_type === type 
+            ? "bg-primary text-primary-foreground" 
+            : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/70"
+        }`}
+      >
+        {getPropertyTypeLabel(type)}
+      </button>
+    ));
+  }, [form.property_type, handleChange, getPropertyTypeLabel]);
+
+  // ✅ Memoize image previews
+  const imagePreviews = useMemo(() => {
+    return form.imagePreviews.map((preview, index) => (
+      <div key={index} className="relative aspect-square rounded-lg overflow-hidden bg-muted">
+        <img src={preview} alt={`Property ${index + 1}`} className="w-full h-full object-cover" />
+        <button
+          type="button"
+          onClick={() => removeImage(index)}
+          className="absolute top-1 right-1 p-1 rounded-full bg-destructive/80 hover:bg-destructive text-white transition-colors"
+        >
+          <Icon icon="solar:close-bold" className="w-3 h-3" />
+        </button>
+      </div>
+    ));
+  }, [form.imagePreviews, removeImage]);
 
   return (
     <DashboardLayout>
@@ -353,7 +386,16 @@ export default function CreateProperty() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Title */}
-          <Field name="title" label="Property Title" placeholder="e.g. Modern 4-Bedroom Duplex in Lekki" required />
+          <FormField
+            name="title"
+            label="Property Title"
+            placeholder="e.g. Modern 4-Bedroom Duplex in Lekki"
+            required
+            value={form.title}
+            onChange={handleChange}
+            error={errors.title}
+            apiError={apiErrors.title?.[0]}
+          />
 
           {/* Description */}
           <div>
@@ -376,11 +418,30 @@ export default function CreateProperty() {
           </div>
 
           {/* Price */}
-          <Field name="price" label="Price (₦)" type="number" placeholder="e.g. 45000000" required />
+          <FormField
+            name="price"
+            label="Price (₦)"
+            type="number"
+            placeholder="e.g. 45000000"
+            required
+            value={form.price}
+            onChange={handleChange}
+            error={errors.price}
+            apiError={apiErrors.price?.[0]}
+          />
 
           {/* Location */}
           <div className="grid grid-cols-2 gap-4">
-            <Field name="city" label="City" placeholder="e.g. Lagos" required />
+            <FormField
+              name="city"
+              label="City"
+              placeholder="e.g. Lagos"
+              required
+              value={form.city}
+              onChange={handleChange}
+              error={errors.city}
+              apiError={apiErrors.city?.[0]}
+            />
             <div>
               <label className="block text-sm font-medium mb-1.5">
                 State <span className="text-destructive">*</span>
@@ -405,28 +466,24 @@ export default function CreateProperty() {
           </div>
 
           {/* Address */}
-          <Field name="address" label="Full Address" placeholder="e.g. 14 Admiralty Way, Lekki Phase 1" required />
+          <FormField
+            name="address"
+            label="Full Address"
+            placeholder="e.g. 14 Admiralty Way, Lekki Phase 1"
+            required
+            value={form.address}
+            onChange={handleChange}
+            error={errors.address}
+            apiError={apiErrors.address?.[0]}
+          />
 
-          {/* Property Type - ✅ Updated to match database ENUM */}
+          {/* Property Type */}
           <div>
             <label className="block text-sm font-medium mb-1.5">
               Property Type <span className="text-destructive">*</span>
             </label>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              {PROPERTY_TYPES.map(type => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => handleChange("property_type", type)}
-                  className={`py-2.5 rounded-xl text-sm font-medium capitalize transition-all ${
-                    form.property_type === type 
-                      ? "bg-primary text-primary-foreground" 
-                      : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/70"
-                  }`}
-                >
-                  {getPropertyTypeLabel(type)}
-                </button>
-              ))}
+              {propertyTypeButtons}
             </div>
             {errors.property_type && <p className="text-destructive text-xs mt-1">{errors.property_type}</p>}
             {apiErrors.property_type && !errors.property_type && (
@@ -436,16 +493,47 @@ export default function CreateProperty() {
 
           {/* Bedrooms, Bathrooms, Area */}
           <div className="grid grid-cols-3 gap-4">
-            <Field name="bedrooms" label="Bedrooms" type="number" placeholder="4" />
-            <Field name="bathrooms" label="Bathrooms" type="number" placeholder="3" />
-            <Field name="square_meters" label="Area (sqm)" type="number" placeholder="350" />
+            <FormField
+              name="bedrooms"
+              label="Bedrooms"
+              type="number"
+              placeholder="4"
+              value={form.bedrooms}
+              onChange={handleChange}
+              error={errors.bedrooms}
+              apiError={apiErrors.bedrooms?.[0]}
+            />
+            <FormField
+              name="bathrooms"
+              label="Bathrooms"
+              type="number"
+              placeholder="3"
+              value={form.bathrooms}
+              onChange={handleChange}
+              error={errors.bathrooms}
+              apiError={apiErrors.bathrooms?.[0]}
+            />
+            <FormField
+              name="square_meters"
+              label="Area (sqm)"
+              type="number"
+              placeholder="350"
+              value={form.square_meters}
+              onChange={handleChange}
+              error={errors.square_meters}
+              apiError={apiErrors.square_meters?.[0]}
+            />
           </div>
 
           {/* Features */}
-          <Field 
-            name="features" 
-            label="Features (comma-separated)" 
-            placeholder="Swimming Pool, Generator, CCTV, Parking..." 
+          <FormField
+            name="features"
+            label="Features (comma-separated)"
+            placeholder="Swimming Pool, Generator, CCTV, Parking..."
+            value={form.features}
+            onChange={handleChange}
+            error={errors.features}
+            apiError={apiErrors.features?.[0]}
           />
 
           {/* Image Upload */}
@@ -482,18 +570,7 @@ export default function CreateProperty() {
             {/* Image Previews */}
             {form.imagePreviews.length > 0 && (
               <div className="grid grid-cols-4 gap-2 mt-3">
-                {form.imagePreviews.map((preview, index) => (
-                  <div key={index} className="relative aspect-square rounded-lg overflow-hidden bg-muted">
-                    <img src={preview} alt={`Property ${index + 1}`} className="w-full h-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => removeImage(index)}
-                      className="absolute top-1 right-1 p-1 rounded-full bg-destructive/80 hover:bg-destructive text-white transition-colors"
-                    >
-                      <Icon icon="solar:close-bold" className="w-3 h-3" />
-                    </button>
-                  </div>
-                ))}
+                {imagePreviews}
               </div>
             )}
             <p className="text-xs text-muted-foreground mt-2">
