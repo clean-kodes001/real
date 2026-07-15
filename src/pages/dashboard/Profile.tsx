@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Icon } from "@iconify/react";
 import toast from "react-hot-toast";
 import DashboardLayout from "@/components/layout/DashboardLayout";
@@ -291,7 +291,6 @@ export default function Profile() {
     return profile?.photo_url || profile?.photo || null;
   };
 
-  // Determine which tabs to show
   const getTabs = () => {
     const tabs = ["profile", "security", "account"];
     if (canAddBankDetails) {
@@ -300,32 +299,50 @@ export default function Profile() {
     return tabs;
   };
 
+  const tabLabels: Record<string, string> = {
+    profile: "Profile",
+    security: "Security",
+    account: "Account",
+    bank: "Bank Details"
+  };
+
   return (
     <DashboardLayout>
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="max-w-2xl mx-auto px-4 py-8">
         {/* Header */}
-        <div>
-          <h1 className="text-2xl font-display font-bold">My Profile</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">Manage your account information</p>
+        <div className="mb-8">
+          <h1 className="text-3xl font-light tracking-tight">Profile</h1>
+          <p className="text-sm text-muted-foreground font-light mt-1">
+            Manage your account information
+          </p>
         </div>
 
         {/* Loading State */}
         {loading ? (
           <div className="space-y-4">
-            <Skeleton className="h-24 w-full rounded-2xl" />
-            <Skeleton className="h-12 w-full rounded-2xl" />
+            <div className="p-5 rounded-2xl bg-muted/30">
+              <div className="flex items-center gap-4">
+                <Skeleton className="w-16 h-16 rounded-2xl" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-5 w-32" />
+                  <Skeleton className="h-4 w-48" />
+                  <Skeleton className="h-3 w-40" />
+                </div>
+              </div>
+            </div>
+            <Skeleton className="h-12 w-full rounded-xl" />
             <Skeleton className="h-64 w-full rounded-2xl" />
           </div>
         ) : (
           <>
             {/* Profile Card */}
             <motion.div 
-              initial={{ opacity: 0, y: 16 }} 
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-4 p-5 rounded-2xl bg-muted relative"
+              className="flex items-center gap-4 p-5 rounded-2xl bg-muted/30 mb-6"
             >
               <div className="relative group">
-                <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center text-primary-foreground text-2xl font-bold overflow-hidden">
+                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary text-2xl font-light overflow-hidden">
                   {getPhotoUrl() ? (
                     <img 
                       src={getPhotoUrl()} 
@@ -348,7 +365,7 @@ export default function Profile() {
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploadingPhoto}
-                  className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
+                  className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-foreground text-background hover:opacity-80 transition-opacity disabled:opacity-50"
                   title="Change photo"
                 >
                   {uploadingPhoto ? (
@@ -366,25 +383,20 @@ export default function Profile() {
                 />
               </div>
               
-              <div className="flex-1">
-                <p className="font-semibold text-lg">{profile?.name ?? user?.name ?? ""}</p>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-lg">{profile?.name ?? user?.name ?? ""}</p>
                 <p className="text-sm text-muted-foreground">{profile?.email ?? user?.email ?? ""}</p>
                 <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                   <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium capitalize">
                     {profile?.role ?? user?.role ?? ""}
                   </span>
                   {profile?.email_verified ? (
-                    <span className="flex items-center gap-1 text-xs text-green-600">
+                    <span className="flex items-center gap-1 text-xs text-emerald-500">
                       <Icon icon="solar:check-circle-bold" className="w-3.5 h-3.5" /> Verified
                     </span>
                   ) : (
-                    <span className="flex items-center gap-1 text-xs text-yellow-600">
+                    <span className="flex items-center gap-1 text-xs text-amber-500">
                       <Icon icon="solar:clock-circle-bold" className="w-3.5 h-3.5" /> Unverified
-                    </span>
-                  )}
-                  {profile?.created_at && (
-                    <span className="text-xs text-muted-foreground">
-                      Joined {formatDate(profile.created_at)}
                     </span>
                   )}
                 </div>
@@ -392,282 +404,289 @@ export default function Profile() {
             </motion.div>
 
             {/* Tabs */}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex gap-1 bg-muted/50 p-1 rounded-xl mb-6">
               {getTabs().map(tab => (
                 <button 
                   key={tab} 
                   onClick={() => setActiveTab(tab as any)}
-                  className={`flex-1 min-w-[80px] py-2.5 rounded-xl text-sm font-medium capitalize transition-all ${
+                  className={`flex-1 py-2 rounded-lg text-sm font-medium capitalize transition-all ${
                     activeTab === tab 
-                      ? "bg-primary text-primary-foreground" 
-                      : "bg-muted text-muted-foreground hover:text-foreground"
+                      ? "bg-background text-foreground" 
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  {tab === 'bank' ? 'Bank Details' : tab}
+                  {tabLabels[tab] || tab}
                 </button>
               ))}
             </div>
 
-            {/* Profile Tab */}
-            {activeTab === "profile" && (
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }} 
-                animate={{ opacity: 1, y: 0 }}
-              >
-                <form onSubmit={handleUpdateProfile} className="space-y-4">
-                  {[
-                    { key: "name" as const, label: "Full Name", icon: "solar:user-bold" },
-                    { key: "phone" as const, label: "Phone Number", icon: "solar:phone-bold" },
-                    { key: "address" as const, label: "Address", icon: "solar:map-point-bold" },
-                    { key: "city" as const, label: "City", icon: "solar:city-bold" },
-                    { key: "state" as const, label: "State", icon: "solar:map-bold" },
-                    { key: "country" as const, label: "Country", icon: "solar:globe-bold" },
-                  ].map(f => (
-                    <div key={f.key}>
-                      <label className="block text-sm font-medium mb-1.5">{f.label}</label>
+            {/* Tab Content */}
+            <AnimatePresence mode="wait">
+              {/* Profile Tab */}
+              {activeTab === "profile" && (
+                <motion.div 
+                  key="profile"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <form onSubmit={handleUpdateProfile} className="space-y-4">
+                    {[
+                      { key: "name" as const, label: "Full Name", icon: "solar:user-bold" },
+                      { key: "phone" as const, label: "Phone Number", icon: "solar:phone-bold" },
+                      { key: "address" as const, label: "Address", icon: "solar:map-point-bold" },
+                      { key: "city" as const, label: "City", icon: "solar:city-bold" },
+                      { key: "state" as const, label: "State", icon: "solar:map-bold" },
+                      { key: "country" as const, label: "Country", icon: "solar:globe-bold" },
+                    ].map(f => (
+                      <div key={f.key}>
+                        <label className="block text-sm font-medium mb-1.5">{f.label}</label>
+                        <div className="relative">
+                          <Icon icon={f.icon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <input
+                            value={form[f.key]}
+                            onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
+                            className="w-full pl-10 pr-4 py-3 rounded-xl bg-muted/50 focus:bg-muted transition-colors text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-2 focus:ring-primary"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                    
+                    <button 
+                      type="submit" 
+                      disabled={updating}
+                      className="w-full py-3 bg-foreground text-background rounded-xl text-sm font-medium hover:opacity-80 disabled:opacity-50 flex items-center justify-center gap-2 transition-opacity"
+                    >
+                      {updating && <Icon icon="solar:refresh-bold" className="w-4 h-4 animate-spin" />}
+                      {updating ? "Saving..." : "Save Changes"}
+                    </button>
+                  </form>
+                </motion.div>
+              )}
+
+              {/* Security Tab */}
+              {activeTab === "security" && (
+                <motion.div 
+                  key="security"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <form onSubmit={handleChangePassword} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5">Current Password</label>
                       <div className="relative">
-                        <Icon icon={f.icon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Icon icon="solar:lock-bold" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <input
-                          value={form[f.key]}
-                          onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-                          className="w-full pl-10 pr-4 py-3 rounded-xl bg-muted text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-2 focus:ring-primary transition-all"
+                          type={showCurrentPwd ? "text" : "password"}
+                          value={pwdForm.current_password}
+                          onChange={e => setPwdForm(prev => ({ ...prev, current_password: e.target.value }))}
+                          placeholder="Enter current password"
+                          className="w-full pl-10 pr-10 py-3 rounded-xl bg-muted/50 focus:bg-muted transition-colors text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-2 focus:ring-primary"
+                        />
+                        <button 
+                          type="button" 
+                          onClick={() => setShowCurrentPwd(s => !s)} 
+                          className="absolute right-3 top-1/2 -translate-y-1/2"
+                        >
+                          <Icon icon={showCurrentPwd ? "solar:eye-closed-bold" : "solar:eye-bold"} className="w-4 h-4 text-muted-foreground" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5">New Password</label>
+                      <div className="relative">
+                        <Icon icon="solar:lock-bold" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <input
+                          type={showNewPwd ? "text" : "password"}
+                          value={pwdForm.new_password}
+                          onChange={e => setPwdForm(prev => ({ ...prev, new_password: e.target.value }))}
+                          placeholder="Enter new password (min 8 characters)"
+                          className="w-full pl-10 pr-10 py-3 rounded-xl bg-muted/50 focus:bg-muted transition-colors text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-2 focus:ring-primary"
+                        />
+                        <button 
+                          type="button" 
+                          onClick={() => setShowNewPwd(s => !s)} 
+                          className="absolute right-3 top-1/2 -translate-y-1/2"
+                        >
+                          <Icon icon={showNewPwd ? "solar:eye-closed-bold" : "solar:eye-bold"} className="w-4 h-4 text-muted-foreground" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5">Confirm New Password</label>
+                      <div className="relative">
+                        <Icon icon="solar:lock-bold" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <input
+                          type={showNewPwd ? "text" : "password"}
+                          value={pwdForm.confirm_password}
+                          onChange={e => setPwdForm(prev => ({ ...prev, confirm_password: e.target.value }))}
+                          placeholder="Confirm new password"
+                          className="w-full pl-10 pr-4 py-3 rounded-xl bg-muted/50 focus:bg-muted transition-colors text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-2 focus:ring-primary"
                         />
                       </div>
                     </div>
-                  ))}
-                  
-                  <button 
-                    type="submit" 
-                    disabled={updating}
-                    className="w-full py-3.5 bg-primary text-primary-foreground font-semibold rounded-xl hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2 transition-opacity"
-                  >
-                    {updating && <Icon icon="solar:refresh-bold" className="w-4 h-4 animate-spin" />}
-                    {updating ? "Saving..." : "Save Changes"}
-                  </button>
-                </form>
-              </motion.div>
-            )}
 
-            {/* Security Tab */}
-            {activeTab === "security" && (
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }} 
-                animate={{ opacity: 1, y: 0 }}
-              >
-                <form onSubmit={handleChangePassword} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1.5">Current Password</label>
-                    <div className="relative">
-                      <Icon icon="solar:lock-bold" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <input
-                        type={showCurrentPwd ? "text" : "password"}
-                        value={pwdForm.current_password}
-                        onChange={e => setPwdForm(prev => ({ ...prev, current_password: e.target.value }))}
-                        placeholder="Enter current password"
-                        className="w-full pl-10 pr-10 py-3 rounded-xl bg-muted text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-2 focus:ring-primary transition-all"
-                      />
-                      <button 
-                        type="button" 
-                        onClick={() => setShowCurrentPwd(s => !s)} 
-                        className="absolute right-3 top-1/2 -translate-y-1/2"
-                      >
-                        <Icon icon={showCurrentPwd ? "solar:eye-closed-bold" : "solar:eye-bold"} className="w-4 h-4 text-muted-foreground" />
-                      </button>
-                    </div>
+                    <button 
+                      type="submit" 
+                      disabled={changingPwd}
+                      className="w-full py-3 bg-foreground text-background rounded-xl text-sm font-medium hover:opacity-80 disabled:opacity-50 flex items-center justify-center gap-2 transition-opacity"
+                    >
+                      {changingPwd && <Icon icon="solar:refresh-bold" className="w-4 h-4 animate-spin" />}
+                      {changingPwd ? "Changing..." : "Change Password"}
+                    </button>
+                  </form>
+                </motion.div>
+              )}
+
+              {/* Bank Details Tab */}
+              {activeTab === "bank" && canAddBankDetails && (
+                <motion.div 
+                  key="bank"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className="mb-4">
+                    <h3 className="font-medium text-lg">Bank Details</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Add your bank account details for receiving payouts
+                    </p>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium mb-1.5">New Password</label>
-                    <div className="relative">
-                      <Icon icon="solar:lock-bold" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <input
-                        type={showNewPwd ? "text" : "password"}
-                        value={pwdForm.new_password}
-                        onChange={e => setPwdForm(prev => ({ ...prev, new_password: e.target.value }))}
-                        placeholder="Enter new password (min 8 characters)"
-                        className="w-full pl-10 pr-10 py-3 rounded-xl bg-muted text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-2 focus:ring-primary transition-all"
-                      />
-                      <button 
-                        type="button" 
-                        onClick={() => setShowNewPwd(s => !s)} 
-                        className="absolute right-3 top-1/2 -translate-y-1/2"
-                      >
-                        <Icon icon={showNewPwd ? "solar:eye-closed-bold" : "solar:eye-bold"} className="w-4 h-4 text-muted-foreground" />
-                      </button>
+                  <form onSubmit={handleUpdateBankDetails} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5">
+                        Bank Name <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <Icon icon="solar:buildings-bold" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <input
+                          value={bankForm.bank_name}
+                          onChange={e => setBankForm(prev => ({ ...prev, bank_name: e.target.value }))}
+                          placeholder="e.g. GTBank, Access Bank, UBA"
+                          className="w-full pl-10 pr-4 py-3 rounded-xl bg-muted/50 focus:bg-muted transition-colors text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-2 focus:ring-primary"
+                        />
+                      </div>
                     </div>
-                  </div>
 
-                  <div>
-                    <label className="block text-sm font-medium mb-1.5">Confirm New Password</label>
-                    <div className="relative">
-                      <Icon icon="solar:lock-bold" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <input
-                        type={showNewPwd ? "text" : "password"}
-                        value={pwdForm.confirm_password}
-                        onChange={e => setPwdForm(prev => ({ ...prev, confirm_password: e.target.value }))}
-                        placeholder="Confirm new password"
-                        className="w-full pl-10 pr-4 py-3 rounded-xl bg-muted text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-2 focus:ring-primary transition-all"
-                      />
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5">
+                        Account Number <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <Icon icon="solar:card-bold" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <input
+                          type="text"
+                          value={bankForm.account_number}
+                          onChange={e => setBankForm(prev => ({ ...prev, account_number: e.target.value.replace(/\D/g, '') }))}
+                          placeholder="e.g. 0123456789"
+                          maxLength={10}
+                          className="w-full pl-10 pr-4 py-3 rounded-xl bg-muted/50 focus:bg-muted transition-colors text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-2 focus:ring-primary"
+                        />
+                      </div>
                     </div>
-                  </div>
 
-                  <button 
-                    type="submit" 
-                    disabled={changingPwd}
-                    className="w-full py-3.5 bg-primary text-primary-foreground font-semibold rounded-xl hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2 transition-opacity"
-                  >
-                    {changingPwd && <Icon icon="solar:refresh-bold" className="w-4 h-4 animate-spin" />}
-                    {changingPwd ? "Changing..." : "Change Password"}
-                  </button>
-                </form>
-              </motion.div>
-            )}
-
-            {/* Bank Details Tab - For Sellers and Lawyers */}
-            {activeTab === "bank" && canAddBankDetails && (
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }} 
-                animate={{ opacity: 1, y: 0 }}
-              >
-                <div className="mb-4">
-                  <h3 className="font-semibold text-lg">Bank Details</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Add your bank account details for receiving payouts
-                  </p>
-                </div>
-
-                <form onSubmit={handleUpdateBankDetails} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1.5">
-                      Bank Name <span className="text-destructive">*</span>
-                    </label>
-                    <div className="relative">
-                      <Icon icon="solar:buildings-bold" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <input
-                        value={bankForm.bank_name}
-                        onChange={e => setBankForm(prev => ({ ...prev, bank_name: e.target.value }))}
-                        placeholder="e.g. GTBank, Access Bank, UBA"
-                        className="w-full pl-10 pr-4 py-3 rounded-xl bg-muted text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-2 focus:ring-primary transition-all"
-                      />
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5">
+                        Account Name <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <Icon icon="solar:user-bold" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <input
+                          value={bankForm.account_name}
+                          onChange={e => setBankForm(prev => ({ ...prev, account_name: e.target.value }))}
+                          placeholder="Full name on the bank account"
+                          className="w-full pl-10 pr-4 py-3 rounded-xl bg-muted/50 focus:bg-muted transition-colors text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-2 focus:ring-primary"
+                        />
+                      </div>
                     </div>
-                  </div>
 
-                  <div>
-                    <label className="block text-sm font-medium mb-1.5">
-                      Account Number <span className="text-destructive">*</span>
-                    </label>
-                    <div className="relative">
-                      <Icon icon="solar:card-bold" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <input
-                        type="text"
-                        value={bankForm.account_number}
-                        onChange={e => setBankForm(prev => ({ ...prev, account_number: e.target.value.replace(/\D/g, '') }))}
-                        placeholder="e.g. 0123456789"
-                        maxLength={10}
-                        className="w-full pl-10 pr-4 py-3 rounded-xl bg-muted text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-2 focus:ring-primary transition-all"
-                      />
+                    <button 
+                      type="submit" 
+                      disabled={updating}
+                      className="w-full py-3 bg-foreground text-background rounded-xl text-sm font-medium hover:opacity-80 disabled:opacity-50 flex items-center justify-center gap-2 transition-opacity"
+                    >
+                      {updating && <Icon icon="solar:refresh-bold" className="w-4 h-4 animate-spin" />}
+                      {updating ? "Saving..." : "Save Bank Details"}
+                    </button>
+                  </form>
+
+                  {/* Current Bank Details */}
+                  {profile?.bank_name && profile?.account_number && (
+                    <div className="mt-4 p-4 rounded-xl bg-emerald-500/5">
+                      <p className="text-xs font-medium text-emerald-600 uppercase tracking-wider mb-2">Current Bank Details</p>
+                      <div className="space-y-1 text-sm">
+                        <p><span className="text-muted-foreground">Bank:</span> {profile.bank_name}</p>
+                        <p><span className="text-muted-foreground">Account Number:</span> {profile.account_number}</p>
+                        <p><span className="text-muted-foreground">Account Name:</span> {profile.account_name}</p>
+                      </div>
                     </div>
-                  </div>
+                  )}
+                </motion.div>
+              )}
 
-                  <div>
-                    <label className="block text-sm font-medium mb-1.5">
-                      Account Name <span className="text-destructive">*</span>
-                    </label>
-                    <div className="relative">
-                      <Icon icon="solar:user-bold" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <input
-                        value={bankForm.account_name}
-                        onChange={e => setBankForm(prev => ({ ...prev, account_name: e.target.value }))}
-                        placeholder="Full name on the bank account"
-                        className="w-full pl-10 pr-4 py-3 rounded-xl bg-muted text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-2 focus:ring-primary transition-all"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="bg-blue-500/5 border border-blue-500/20 p-4 rounded-xl">
-                    <div className="flex items-start gap-3">
-                      <Icon icon="solar:info-circle-bold" className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-sm text-blue-600 font-medium">Important</p>
-                        <p className="text-xs text-muted-foreground">
-                          Your bank details will be used for all future payouts. Please ensure the account name matches your registered name.
-                        </p>
+              {/* Account Tab */}
+              {activeTab === "account" && (
+                <motion.div 
+                  key="account"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="space-y-4"
+                >
+                  <div className="p-5 rounded-2xl bg-muted/30">
+                    <h3 className="font-medium text-lg">Account Information</h3>
+                    <div className="mt-3 space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Account ID</span>
+                        <span className="font-mono text-xs">{profile?.uuid || user?.uuid || "—"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Member Since</span>
+                        <span>{profile?.created_at ? formatDate(profile.created_at) : "—"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Account Status</span>
+                        <span className={profile?.is_active ? "text-emerald-500" : "text-red-500"}>
+                          {profile?.is_active ? "Active" : "Inactive"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Email Status</span>
+                        <span className={profile?.email_verified ? "text-emerald-500" : "text-amber-500"}>
+                          {profile?.email_verified ? "Verified" : "Unverified"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Role</span>
+                        <span className="capitalize">{profile?.role || user?.role || "—"}</span>
                       </div>
                     </div>
                   </div>
 
-                  <button 
-                    type="submit" 
-                    disabled={updating}
-                    className="w-full py-3.5 bg-primary text-primary-foreground font-semibold rounded-xl hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2 transition-opacity"
-                  >
-                    {updating && <Icon icon="solar:refresh-bold" className="w-4 h-4 animate-spin" />}
-                    {updating ? "Saving..." : "Save Bank Details"}
-                  </button>
-                </form>
-
-                {/* Show current bank details if exists */}
-                {profile?.bank_name && profile?.account_number && (
-                  <div className="mt-4 p-4 rounded-xl bg-green-500/10 border border-green-500/20">
-                    <p className="text-xs text-green-600 font-medium mb-2">Current Bank Details</p>
-                    <div className="space-y-1 text-sm">
-                      <p><span className="text-muted-foreground">Bank:</span> {profile.bank_name}</p>
-                      <p><span className="text-muted-foreground">Account Number:</span> {profile.account_number}</p>
-                      <p><span className="text-muted-foreground">Account Name:</span> {profile.account_name}</p>
-                    </div>
+                  {/* Danger Zone */}
+                  <div className="p-5 rounded-2xl bg-red-500/5">
+                    <h3 className="font-medium text-red-500">Danger Zone</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Once you deactivate your account, you will lose access to all your data.
+                    </p>
+                    <button
+                      onClick={handleDeleteAccount}
+                      className="mt-4 px-6 py-2 bg-red-500 text-white rounded-xl text-sm font-medium hover:opacity-80 transition-opacity"
+                    >
+                      Deactivate Account
+                    </button>
                   </div>
-                )}
-              </motion.div>
-            )}
-
-            {/* Account Tab */}
-            {activeTab === "account" && (
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }} 
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-4"
-              >
-                <div className="p-5 rounded-2xl bg-muted">
-                  <h3 className="font-semibold">Account Information</h3>
-                  <div className="mt-3 space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Account ID</span>
-                      <span className="font-mono">{profile?.uuid || user?.uuid || "—"}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Member Since</span>
-                      <span>{profile?.created_at ? formatDate(profile.created_at) : "—"}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Account Status</span>
-                      <span className={profile?.is_active ? "text-green-600" : "text-red-600"}>
-                        {profile?.is_active ? "Active" : "Inactive"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Email Status</span>
-                      <span className={profile?.email_verified ? "text-green-600" : "text-yellow-600"}>
-                        {profile?.email_verified ? "Verified" : "Unverified"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Danger Zone */}
-                <div className="p-5 rounded-2xl border border-destructive/20 bg-destructive/5">
-                  <h3 className="font-semibold text-destructive">Danger Zone</h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Once you deactivate your account, you will lose access to all your data.
-                  </p>
-                  <button
-                    onClick={handleDeleteAccount}
-                    className="mt-4 px-6 py-2.5 bg-destructive text-destructive-foreground rounded-xl hover:opacity-90 transition-opacity text-sm font-medium"
-                  >
-                    Deactivate Account
-                  </button>
-                </div>
-              </motion.div>
-            )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </>
         )}
       </div>

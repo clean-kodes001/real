@@ -118,13 +118,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   }, [user]);
 
   const navItems = getNavItems(role);
-  const mobileNavItems = navItems.length > 5 ? navItems.slice(0, 5) : navItems;
 
   if (!role) {
     return (
       <div className="min-h-screen bg-background">
         <div className="flex-1 flex flex-col">
-          <header className="sticky top-0 z-30 h-16 flex items-center px-4 md:px-6 backdrop-blur-xl bg-background/80">
+          <header className="sticky top-0 z-30 h-16 flex items-center px-4 md:px-6 backdrop-blur-xl bg-background/80 border-b border-border/50">
             <div className="flex-1" />
             <div className="flex items-center gap-3">
               <Link href="/dashboard/profile">
@@ -138,7 +137,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               </Link>
             </div>
           </header>
-          <main className="flex-1 px-4 md:px-6 py-6 pb-24 md:pb-6">
+          <main className="flex-1 px-4 md:px-6 py-6">
             {children}
           </main>
         </div>
@@ -157,14 +156,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       >
         <Link href={item.href}>
           <motion.div
-            whileHover={{ x: 4 }}
+            whileHover={mobile ? { x: 4 } : { x: 4 }}
             whileTap={{ scale: 0.97 }}
             onClick={() => mobile && setSidebarOpen(false)}
-            className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer ${
+            className={`relative flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer ${
               isActive
                 ? "bg-primary/10 text-primary"
                 : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-            }`}
+            } ${mobile ? "py-4" : ""}`}
           >
             {isActive && (
               <motion.div
@@ -192,6 +191,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   const displayName = user?.name || "User";
   const initials = getInitials(displayName);
+
+  // Get current page title for header
+  const currentPage = navItems.find(item => 
+    location === item.href || (item.href !== "/dashboard" && item.href !== "/admin" && location.startsWith(item.href))
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -285,27 +289,61 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 </motion.button>
               </div>
               
-              {role && (
-                <div className="px-4 mb-4">
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/5 border border-primary/10 w-fit">
-                    <Icon icon={roleIcons[role] || "solar:user-bold"} className="w-3.5 h-3.5 text-primary" />
-                    <span className="text-xs font-medium text-primary">{roleLabels[role] ?? role}</span>
+              {/* User info in mobile menu */}
+              <div className="px-4 mb-6 pb-4 border-b border-border/50">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm font-semibold cursor-pointer overflow-hidden border border-primary/20">
+                    {profilePhoto ? (
+                      <img 
+                        src={profilePhoto} 
+                        alt={displayName}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                          const parent = (e.target as HTMLImageElement).parentElement;
+                          if (parent) {
+                            const span = document.createElement('span');
+                            span.textContent = initials;
+                            parent.appendChild(span);
+                          }
+                        }}
+                      />
+                    ) : (
+                      <span>{initials}</span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-medium">{displayName}</p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <Icon icon={roleIcons[role] || "solar:user-bold"} className="w-3 h-3 text-primary" />
+                      <span className="text-xs text-primary">{roleLabels[role] ?? role}</span>
+                    </div>
                   </div>
                 </div>
-              )}
+              </div>
 
-              <nav className="flex-1 px-2 space-y-0.5 overflow-y-auto">
+              <nav className="flex-1 px-2 space-y-1 overflow-y-auto">
                 {navItems.map((item, index) => (
                   <NavLink key={item.href} item={item} mobile index={index} />
                 ))}
               </nav>
 
-              <div className="px-2 space-y-0.5 mt-4 pt-4 border-t border-border/50">
+              <div className="px-2 space-y-1 mt-4 pt-4 border-t border-border/50">
+                <motion.button
+                  whileHover={{ x: 4 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={toggleTheme}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all duration-200"
+                >
+                  <Icon icon={theme === "dark" ? "solar:sun-bold" : "solar:moon-bold"} className="w-5 h-5" />
+                  {theme === "dark" ? "Light Mode" : "Dark Mode"}
+                </motion.button>
+                
                 <motion.button
                   whileHover={{ x: 4 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => { logout(); navigate("/"); }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-all duration-200"
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-all duration-200"
                 >
                   <Icon icon="solar:logout-bold" className="w-5 h-5" />
                   Logout
@@ -318,7 +356,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
       {/* Main Content */}
       <div className="flex-1 md:ml-64 flex flex-col min-h-screen">
-        {/* Top Bar */}
+        {/* Top Bar - Enhanced */}
         <header className="sticky top-0 z-30 h-16 flex items-center px-4 md:px-6 backdrop-blur-xl bg-background/80 border-b border-border/50">
           <motion.button 
             whileHover={{ scale: 1.05 }}
@@ -329,9 +367,41 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             <Icon icon="solar:hamburger-menu-bold" className="w-6 h-6" />
           </motion.button>
           
+          {/* Page Title */}
+          <div className="flex items-center gap-3">
+            {currentPage && (
+              <>
+                <Icon icon={currentPage.icon} className="w-5 h-5 text-muted-foreground" />
+                <h1 className="text-lg font-light tracking-tight">{currentPage.label}</h1>
+              </>
+            )}
+          </div>
+          
           <div className="flex-1" />
           
           <div className="flex items-center gap-2">
+            {/* Quick Search */}
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-muted/50 hover:bg-muted transition-colors"
+            >
+              <Icon icon="solar:magnifer-bold" className="w-4 h-4 text-muted-foreground" />
+              <span className="text-xs text-muted-foreground">Search...</span>
+              <kbd className="text-[10px] text-muted-foreground/60 bg-muted px-1.5 py-0.5 rounded">⌘K</kbd>
+            </motion.div>
+
+            {/* Theme Toggle - Mobile */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={toggleTheme}
+              className="md:hidden p-2 rounded-full hover:bg-muted/50 transition-colors"
+            >
+              <Icon icon={theme === "dark" ? "solar:sun-bold" : "solar:moon-bold"} className="w-4 h-4" />
+            </motion.button>
+
+            {/* Notifications */}
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Link href="/dashboard/notifications">
                 <button className="p-2 rounded-full hover:bg-muted/50 transition-colors relative">
@@ -341,30 +411,35 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               </Link>
             </motion.div>
             
+            {/* Profile */}
             <motion.div
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
               <Link href="/dashboard/profile">
-                <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-semibold cursor-pointer overflow-hidden border border-primary/20">
-                  {profilePhoto ? (
-                    <img 
-                      src={profilePhoto} 
-                      alt={displayName}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                        const parent = (e.target as HTMLImageElement).parentElement;
-                        if (parent) {
-                          const span = document.createElement('span');
-                          span.textContent = initials;
-                          parent.appendChild(span);
-                        }
-                      }}
-                    />
-                  ) : (
-                    <span>{initials}</span>
-                  )}
+                <div className="flex items-center gap-2 px-2 py-1.5 rounded-full hover:bg-muted/50 transition-colors cursor-pointer">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-semibold overflow-hidden border border-primary/20">
+                    {profilePhoto ? (
+                      <img 
+                        src={profilePhoto} 
+                        alt={displayName}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                          const parent = (e.target as HTMLImageElement).parentElement;
+                          if (parent) {
+                            const span = document.createElement('span');
+                            span.textContent = initials;
+                            parent.appendChild(span);
+                          }
+                        }}
+                      />
+                    ) : (
+                      <span>{initials}</span>
+                    )}
+                  </div>
+                  <span className="hidden sm:block text-sm font-medium">{displayName}</span>
+                  <Icon icon="solar:chevron-down-bold" className="hidden sm:block w-3 h-3 text-muted-foreground" />
                 </div>
               </Link>
             </motion.div>
@@ -372,7 +447,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 px-4 md:px-6 py-6 pb-24 md:pb-6">
+        <main className="flex-1 px-4 md:px-6 py-6">
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -382,51 +457,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </motion.div>
         </main>
       </div>
-
-      {/* Mobile Bottom Tab Bar */}
-      {mobileNavItems.length > 0 && (
-        <motion.nav
-          initial={{ y: 100 }}
-          animate={{ y: 0 }}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="fixed bottom-0 left-0 right-0 z-30 md:hidden h-16 flex items-center bg-background/90 backdrop-blur-xl border-t border-border/50"
-        >
-          {mobileNavItems.map((item, index) => {
-            const isActive = location === item.href || (item.href !== "/dashboard" && item.href !== "/admin" && location.startsWith(item.href));
-            return (
-              <motion.div
-                key={item.href}
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: index * 0.05 }}
-                className="flex-1"
-              >
-                <Link href={item.href}>
-                  <motion.div
-                    whileHover={{ y: -1 }}
-                    whileTap={{ scale: 0.95 }}
-                    className={`flex flex-col items-center gap-0.5 py-2 cursor-pointer transition-all duration-200 ${
-                      isActive ? "text-primary" : "text-muted-foreground"
-                    }`}
-                  >
-                    <div className="relative">
-                      <Icon icon={item.icon} className="w-5 h-5" />
-                      {isActive && (
-                        <motion.div
-                          layoutId="mobileActive"
-                          className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full"
-                          transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                        />
-                      )}
-                    </div>
-                    <span className="text-[10px] font-medium truncate max-w-[50px]">{item.label}</span>
-                  </motion.div>
-                </Link>
-              </motion.div>
-            );
-          })}
-        </motion.nav>
-      )}
     </div>
   );
 }
