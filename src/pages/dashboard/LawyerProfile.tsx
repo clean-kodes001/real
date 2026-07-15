@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Icon } from "@iconify/react";
 import toast from "react-hot-toast";
 import DashboardLayout from "@/components/layout/DashboardLayout";
@@ -89,7 +89,6 @@ export default function LawyerProfile() {
       }
     } catch (error) {
       if (error instanceof ApiError) {
-        // If 404, it means lawyer profile doesn't exist yet - that's fine
         if (error.statusCode === 404) {
           setProfile(null);
         } else {
@@ -139,7 +138,6 @@ export default function LawyerProfile() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     
-    // Validation
     if (!form.license_number.trim()) {
       toast.error("License number is required");
       return;
@@ -166,7 +164,6 @@ export default function LawyerProfile() {
       let barCertificateBase64: string | undefined;
       
       if (barCertificate) {
-        // Validate file
         if (barCertificate.size > 5 * 1024 * 1024) {
           toast.error("File is too large. Maximum size is 5MB");
           setSubmitting(false);
@@ -192,7 +189,6 @@ export default function LawyerProfile() {
           : "Lawyer registration submitted! Awaiting admin approval."
       );
       
-      // Refresh profile
       await fetchProfile();
       setBarCertificate(null);
       setBarCertificatePreview(null);
@@ -215,7 +211,7 @@ export default function LawyerProfile() {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="max-w-2xl mx-auto space-y-4">
+        <div className="max-w-2xl mx-auto px-4 py-8 space-y-4">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-64 w-full rounded-2xl" />
           <Skeleton className="h-96 w-full rounded-2xl" />
@@ -226,11 +222,11 @@ export default function LawyerProfile() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-display font-bold">Lawyer Profile</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">
+          <h1 className="text-3xl font-light tracking-tight">Lawyer Profile</h1>
+          <p className="text-sm text-muted-foreground font-light mt-1">
             {isRegistered 
               ? "Manage your professional profile" 
               : "Register as a lawyer to get discovered by clients"}
@@ -240,64 +236,64 @@ export default function LawyerProfile() {
         {/* Profile Status Card */}
         {isRegistered && profile && (
           <motion.div 
-            initial={{ opacity: 0, y: 10 }} 
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="p-5 rounded-2xl bg-muted space-y-3"
+            className="p-5 rounded-2xl bg-muted/30 space-y-4"
           >
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold">Profile Status</h3>
+              <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Profile Status</h3>
               <div className="flex items-center gap-2">
                 {isVerified && (
-                  <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-600">
-                    Verified ✓
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-500">
+                    Verified
                   </span>
                 )}
-                <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
                   isApproved 
-                    ? "bg-green-500/10 text-green-600" 
-                    : "bg-yellow-500/10 text-yellow-600"
+                    ? "bg-emerald-500/10 text-emerald-500" 
+                    : "bg-amber-500/10 text-amber-500"
                 }`}>
-                  {isApproved ? "Approved" : "Pending Approval"}
+                  {isApproved ? "Approved" : "Pending"}
                 </span>
               </div>
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div>
-                <p className="text-muted-foreground text-xs">Rating</p>
-                <p className="font-semibold flex items-center gap-1">
-                  <Icon icon="solar:star-bold" className="w-4 h-4 text-yellow-500" />
+                <p className="text-xs text-muted-foreground/60">Rating</p>
+                <p className="font-medium flex items-center gap-1">
+                  <Icon icon="solar:star-bold" className="w-3.5 h-3.5 text-amber-500" />
                   {profile.rating ?? "—"}
                 </p>
               </div>
               <div>
-                <p className="text-muted-foreground text-xs">Cases Completed</p>
-                <p className="font-semibold">{profile.completed_cases ?? 0}</p>
+                <p className="text-xs text-muted-foreground/60">Completed</p>
+                <p className="font-medium">{profile.completed_cases ?? 0}</p>
               </div>
               <div>
-                <p className="text-muted-foreground text-xs">Total Cases</p>
-                <p className="font-semibold">{profile.total_cases ?? 0}</p>
+                <p className="text-xs text-muted-foreground/60">Total Cases</p>
+                <p className="font-medium">{profile.total_cases ?? 0}</p>
               </div>
               <div>
-                <p className="text-muted-foreground text-xs">Experience</p>
-                <p className="font-semibold">{profile.years_experience} years</p>
+                <p className="text-xs text-muted-foreground/60">Experience</p>
+                <p className="font-medium">{profile.years_experience}y</p>
               </div>
             </div>
 
             {/* License */}
             <div>
-              <p className="text-muted-foreground text-xs">License Number</p>
-              <p className="font-medium">{profile.license_number}</p>
+              <p className="text-xs text-muted-foreground/60 uppercase tracking-wider">License</p>
+              <p className="font-medium text-sm">{profile.license_number}</p>
             </div>
 
             {/* Jurisdictions */}
             {profile.jurisdiction_states && profile.jurisdiction_states.length > 0 && (
               <div>
-                <p className="text-muted-foreground text-xs mb-1.5">Jurisdictions</p>
+                <p className="text-xs text-muted-foreground/60 uppercase tracking-wider mb-1.5">Jurisdictions</p>
                 <div className="flex flex-wrap gap-1.5">
                   {profile.jurisdiction_states.map(s => (
-                    <span key={s} className="px-2.5 py-1 rounded-lg bg-primary/10 text-primary text-xs font-medium">
+                    <span key={s} className="px-2.5 py-0.5 rounded-lg bg-primary/5 text-primary text-xs font-medium">
                       {s}
                     </span>
                   ))}
@@ -308,22 +304,22 @@ export default function LawyerProfile() {
             {/* Specialization */}
             {profile.specialization && (
               <div>
-                <p className="text-muted-foreground text-xs">Specialization</p>
-                <p className="font-medium">{profile.specialization}</p>
+                <p className="text-xs text-muted-foreground/60 uppercase tracking-wider">Specialization</p>
+                <p className="font-medium text-sm">{profile.specialization}</p>
               </div>
             )}
 
             {/* Bio */}
             {profile.bio && (
               <div>
-                <p className="text-muted-foreground text-xs">Bio</p>
-                <p className="text-sm">{profile.bio}</p>
+                <p className="text-xs text-muted-foreground/60 uppercase tracking-wider">Bio</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">{profile.bio}</p>
               </div>
             )}
 
             {/* Created At */}
             {profile.created_at && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground/60">
                 Registered {formatDate(profile.created_at)}
               </p>
             )}
@@ -331,33 +327,33 @@ export default function LawyerProfile() {
         )}
 
         {/* Registration/Update Form */}
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <motion.div 
-            initial={{ opacity: 0, y: 16 }} 
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="p-5 rounded-2xl bg-muted space-y-4"
+            className="p-5 rounded-2xl bg-muted/30 space-y-4"
           >
-            <h3 className="font-semibold">
+            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
               {isRegistered ? "Update Details" : "Professional Details"}
             </h3>
 
             {/* License Number */}
             <div>
               <label className="block text-sm font-medium mb-1.5">
-                License Number <span className="text-destructive">*</span>
+                License Number <span className="text-red-500">*</span>
               </label>
               <input
                 value={form.license_number}
                 onChange={e => setForm(f => ({ ...f, license_number: e.target.value }))}
                 placeholder="e.g. L-2024-001"
-                className="w-full px-4 py-3 rounded-xl bg-background text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-2 focus:ring-primary transition-all"
+                className="w-full px-4 py-3 rounded-xl bg-background text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-2 focus:ring-primary transition-colors"
               />
             </div>
 
             {/* Years Experience */}
             <div>
               <label className="block text-sm font-medium mb-1.5">
-                Years of Experience <span className="text-destructive">*</span>
+                Years of Experience <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -365,24 +361,24 @@ export default function LawyerProfile() {
                 onChange={e => setForm(f => ({ ...f, years_experience: e.target.value }))}
                 placeholder="e.g. 8"
                 min="0"
-                className="w-full px-4 py-3 rounded-xl bg-background text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-2 focus:ring-primary transition-all"
+                className="w-full px-4 py-3 rounded-xl bg-background text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-2 focus:ring-primary transition-colors"
               />
             </div>
 
             {/* Specialization */}
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Specialization <span className="text-destructive">*</span>
+              <label className="block text-sm font-medium mb-1.5">
+                Specialization <span className="text-red-500">*</span>
               </label>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {SPECIALTIES.map(s => (
                   <button 
                     key={s} 
                     type="button" 
                     onClick={() => setForm(f => ({ ...f, specialization: s }))}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                       form.specialization === s 
-                        ? "bg-primary text-primary-foreground" 
+                        ? "bg-foreground text-background" 
                         : "bg-background text-muted-foreground hover:text-foreground"
                     }`}
                   >
@@ -394,18 +390,18 @@ export default function LawyerProfile() {
 
             {/* Jurisdiction States */}
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Jurisdiction States <span className="text-destructive">*</span>
+              <label className="block text-sm font-medium mb-1.5">
+                Jurisdiction States <span className="text-red-500">*</span>
               </label>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {NIGERIAN_STATES.map(s => (
                   <button 
                     key={s} 
                     type="button" 
                     onClick={() => toggleState(s)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                       form.jurisdiction_states.includes(s) 
-                        ? "bg-primary text-primary-foreground" 
+                        ? "bg-foreground text-background" 
                         : "bg-background text-muted-foreground hover:text-foreground"
                     }`}
                   >
@@ -414,7 +410,7 @@ export default function LawyerProfile() {
                 ))}
               </div>
               {form.jurisdiction_states.length === 0 && (
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground/60 mt-1">
                   Select at least one state where you practice
                 </p>
               )}
@@ -422,37 +418,37 @@ export default function LawyerProfile() {
 
             {/* Bio */}
             <div>
-              <label className="block text-sm font-medium mb-1.5">Bio (Optional)</label>
+              <label className="block text-sm font-medium mb-1.5">Bio</label>
               <textarea
                 value={form.bio}
                 onChange={e => setForm(f => ({ ...f, bio: e.target.value }))}
                 placeholder="Brief description of your practice and experience..."
                 rows={3}
-                className="w-full px-4 py-3 rounded-xl bg-background text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-2 focus:ring-primary transition-all resize-none"
+                className="w-full px-4 py-3 rounded-xl bg-background text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-2 focus:ring-primary transition-colors resize-none"
               />
             </div>
 
             {/* Bar Certificate Upload */}
             <div>
               <label className="block text-sm font-medium mb-1.5">
-                Bar Certificate {!profile?.bar_certificate_url && <span className="text-destructive">*</span>}
+                Bar Certificate {!profile?.bar_certificate_url && <span className="text-red-500">*</span>}
               </label>
               {profile?.bar_certificate_url && !barCertificate && (
-                <div className="mb-2 p-3 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center gap-3">
-                  <Icon icon="solar:check-circle-bold" className="w-5 h-5 text-green-500" />
+                <div className="mb-2 p-3 rounded-xl bg-emerald-500/5 flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                    <Icon icon="solar:check-circle-bold" className="w-4 h-4 text-emerald-500" />
+                  </div>
                   <div>
-                    <p className="text-sm font-medium text-green-600">Certificate uploaded</p>
-                    <p className="text-xs text-green-600/70">
-                      Upload a new file to replace it
-                    </p>
+                    <p className="text-sm font-medium text-emerald-600">Certificate uploaded</p>
+                    <p className="text-xs text-emerald-500/70">Upload a new file to replace it</p>
                   </div>
                 </div>
               )}
               <label 
-                className={`block w-full border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors ${
+                className={`block w-full rounded-xl p-6 text-center cursor-pointer transition-colors ${
                   barCertificate 
-                    ? "border-primary/40 bg-primary/5" 
-                    : "border-border hover:border-primary/30"
+                    ? "bg-primary/5 ring-2 ring-primary" 
+                    : "bg-background hover:bg-muted/30"
                 }`}
               >
                 <input 
@@ -464,20 +460,22 @@ export default function LawyerProfile() {
                 {barCertificate ? (
                   <div>
                     {barCertificatePreview && barCertificate.type.startsWith('image/') ? (
-                      <img src={barCertificatePreview} alt="Certificate" className="max-h-24 mx-auto mb-2 rounded-lg object-contain" />
+                      <img src={barCertificatePreview} alt="Certificate" className="max-h-20 mx-auto mb-2 rounded-lg object-contain" />
                     ) : (
-                      <Icon icon="solar:document-bold" className="w-8 h-8 text-primary mx-auto mb-2" />
+                      <Icon icon="solar:document-bold" className="w-6 h-6 text-primary mx-auto mb-2" />
                     )}
                     <p className="text-sm font-medium">{barCertificate.name}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
+                    <p className="text-xs text-muted-foreground/60 mt-0.5">
                       {(barCertificate.size / 1024 / 1024).toFixed(2)} MB • Click to change
                     </p>
                   </div>
                 ) : (
                   <div>
-                    <Icon icon="solar:upload-bold" className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                    <div className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-2">
+                      <Icon icon="solar:upload-bold" className="w-5 h-5 text-muted-foreground" />
+                    </div>
                     <p className="text-sm font-medium">Click to upload bar certificate</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">PDF, JPG or PNG, max 5MB</p>
+                    <p className="text-xs text-muted-foreground/60 mt-0.5">PDF, JPG or PNG, max 5MB</p>
                   </div>
                 )}
               </label>
@@ -488,7 +486,7 @@ export default function LawyerProfile() {
           <button 
             type="submit" 
             disabled={submitting}
-            className="w-full py-3.5 bg-primary text-primary-foreground font-semibold rounded-xl hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2 transition-opacity"
+            className="w-full py-3 bg-foreground text-background rounded-xl text-sm font-medium hover:opacity-80 disabled:opacity-30 flex items-center justify-center gap-2 transition-opacity"
           >
             {submitting && <Icon icon="solar:refresh-bold" className="w-4 h-4 animate-spin" />}
             {submitting 
@@ -500,7 +498,7 @@ export default function LawyerProfile() {
           </button>
 
           {/* Info Text */}
-          <p className="text-xs text-center text-muted-foreground">
+          <p className="text-xs text-center text-muted-foreground/60">
             <Icon icon="solar:shield-check-bold" className="w-3 h-3 inline mr-1" />
             Your information will be reviewed by our team. Approval may take 1-2 business days.
           </p>

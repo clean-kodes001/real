@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, memo } from "react";
 import { useLocation } from "wouter";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Icon } from "@iconify/react";
 import toast from "react-hot-toast";
 import DashboardLayout from "@/components/layout/DashboardLayout";
@@ -44,7 +44,7 @@ const NIGERIAN_STATES = [
   "Rivers", "Sokoto", "Taraba", "Yobe", "Zamfara"
 ];
 
-// Memoized input component to prevent re-renders
+// Memoized input component
 const FormField = memo(({ 
   name, 
   label, 
@@ -71,7 +71,6 @@ const FormField = memo(({
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     if (type === "number") {
-      // Allow empty string or valid numbers only
       if (val === "" || /^\d*\.?\d*$/.test(val)) {
         onChange(name, val);
       }
@@ -83,19 +82,19 @@ const FormField = memo(({
   return (
     <div>
       <label className="block text-sm font-medium mb-1.5">
-        {label} {required && <span className="text-destructive">*</span>}
+        {label} {required && <span className="text-red-500">*</span>}
       </label>
       <input
         type={type}
         value={value}
         onChange={handleChange}
         placeholder={placeholder}
-        className={`w-full px-4 py-3 rounded-xl bg-muted text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-2 focus:ring-primary transition-all ${
-          hasError ? "ring-2 ring-destructive" : ""
+        className={`w-full px-4 py-3 rounded-xl bg-muted/30 focus:bg-muted/50 transition-colors text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-2 focus:ring-primary ${
+          hasError ? "ring-2 ring-red-500" : ""
         }`}
       />
-      {error && <p className="text-destructive text-xs mt-1">{error}</p>}
-      {apiError && !error && <p className="text-destructive text-xs mt-1">{apiError}</p>}
+      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+      {apiError && !error && <p className="text-red-500 text-xs mt-1">{apiError}</p>}
     </div>
   );
 });
@@ -130,13 +129,15 @@ export default function CreateProperty() {
     toast.error("Only sellers and admins can list properties");
     return (
       <DashboardLayout>
-        <div className="max-w-2xl mx-auto py-20 text-center">
-          <Icon icon="solar:danger-triangle-bold" className="w-12 h-12 text-destructive mx-auto mb-3" />
-          <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
-          <p className="text-muted-foreground">Only sellers and admins can list properties.</p>
+        <div className="max-w-2xl mx-auto px-4 py-20 text-center">
+          <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
+            <Icon icon="solar:danger-triangle-bold" className="w-8 h-8 text-red-500" />
+          </div>
+          <h2 className="text-xl font-light mb-2">Access Denied</h2>
+          <p className="text-muted-foreground text-sm">Only sellers and admins can list properties.</p>
           <button 
             onClick={() => navigate("/dashboard")}
-            className="mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition-opacity"
+            className="mt-6 px-6 py-2 bg-foreground text-background rounded-xl text-sm font-medium hover:opacity-80 transition-opacity"
           >
             Go to Dashboard
           </button>
@@ -145,7 +146,6 @@ export default function CreateProperty() {
     );
   }
 
-  // ✅ Memoized validate function
   const validate = useCallback(() => {
     const e: Partial<Record<keyof FormData, string>> = {};
     if (!form.title.trim()) e.title = "Title is required";
@@ -161,14 +161,11 @@ export default function CreateProperty() {
     return e;
   }, [form]);
 
-  // ✅ Memoized handlers with useCallback
   const handleChange = useCallback((key: keyof FormData, value: string) => {
     setForm(prev => ({ ...prev, [key]: value }));
-    // Clear client-side error
     if (errors[key]) {
       setErrors(e => ({ ...e, [key]: undefined }));
     }
-    // Clear API errors for this field
     if (apiErrors[key]) {
       setApiErrors(e => {
         const newErrors = { ...e };
@@ -187,12 +184,10 @@ export default function CreateProperty() {
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      // Check file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         toast.error(`Image ${file.name} is too large (max 5MB)`);
         continue;
       }
-      // Check file type
       if (!file.type.startsWith('image/')) {
         toast.error(`File ${file.name} is not an image`);
         continue;
@@ -207,7 +202,6 @@ export default function CreateProperty() {
         images: [...prev.images, ...validFiles],
         imagePreviews: [...prev.imagePreviews, ...validPreviews],
       }));
-      // Clear image errors
       if (errors.images) {
         setErrors(e => ({ ...e, images: undefined }));
       }
@@ -241,7 +235,6 @@ export default function CreateProperty() {
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate form
     const errs = validate();
     if (Object.keys(errs).length) {
       setErrors(errs);
@@ -253,11 +246,9 @@ export default function CreateProperty() {
     setApiErrors({});
     
     try {
-      // Convert images to base64
       const imagePromises = form.images.map(fileToBase64);
       const imageBase64 = await Promise.all(imagePromises);
 
-      // Prepare data for API
       const propertyData = {
         title: form.title,
         description: form.description,
@@ -280,16 +271,12 @@ export default function CreateProperty() {
       navigate(`/property/${response.data.uuid}`);
       
     } catch (error) {
-      // Handle ApiError properly
       if (error instanceof ApiError) {
-        // Show the error message from API
         toast.error(error.getDisplayMessage());
         
-        // If there are field-specific errors, set them
         if (error.hasFieldErrors()) {
           setApiErrors(error.errors || {});
           
-          // Map API errors to form fields
           const fieldErrors: Partial<Record<keyof FormData, string>> = {};
           Object.entries(error.errors || {}).forEach(([key, values]) => {
             const formKey = key as keyof FormData;
@@ -300,7 +287,6 @@ export default function CreateProperty() {
           setErrors(fieldErrors);
         }
         
-        // Handle specific status codes
         if (error.statusCode === 401) {
           toast.error("Your session has expired. Please login again.");
           navigate("/auth/login");
@@ -310,7 +296,6 @@ export default function CreateProperty() {
           toast.error("Please check your form inputs.");
         }
       } else {
-        // Handle unexpected errors
         toast.error("Failed to list property. Please try again.");
         console.error("Unexpected error:", error);
       }
@@ -319,7 +304,6 @@ export default function CreateProperty() {
     }
   }, [form, validate, fileToBase64, navigate]);
 
-  // ✅ Memoized type label function
   const getPropertyTypeLabel = useCallback((type: string): string => {
     const labels: Record<string, string> = {
       land: "Land",
@@ -334,7 +318,6 @@ export default function CreateProperty() {
     return labels[type] || type;
   }, []);
 
-  // ✅ Memoize the property type buttons to prevent re-renders
   const propertyTypeButtons = useMemo(() => {
     return PROPERTY_TYPES.map(type => (
       <button
@@ -343,8 +326,8 @@ export default function CreateProperty() {
         onClick={() => handleChange("property_type", type)}
         className={`py-2.5 rounded-xl text-sm font-medium capitalize transition-all ${
           form.property_type === type 
-            ? "bg-primary text-primary-foreground" 
-            : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/70"
+            ? "bg-foreground text-background" 
+            : "bg-muted/30 text-muted-foreground hover:text-foreground hover:bg-muted/50"
         }`}
       >
         {getPropertyTypeLabel(type)}
@@ -352,15 +335,14 @@ export default function CreateProperty() {
     ));
   }, [form.property_type, handleChange, getPropertyTypeLabel]);
 
-  // ✅ Memoize image previews
   const imagePreviews = useMemo(() => {
     return form.imagePreviews.map((preview, index) => (
-      <div key={index} className="relative aspect-square rounded-lg overflow-hidden bg-muted">
+      <div key={index} className="relative aspect-square rounded-xl overflow-hidden bg-muted/30">
         <img src={preview} alt={`Property ${index + 1}`} className="w-full h-full object-cover" />
         <button
           type="button"
           onClick={() => removeImage(index)}
-          className="absolute top-1 right-1 p-1 rounded-full bg-destructive/80 hover:bg-destructive text-white transition-colors"
+          className="absolute top-2 right-2 p-1.5 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
         >
           <Icon icon="solar:close-bold" className="w-3 h-3" />
         </button>
@@ -370,21 +352,31 @@ export default function CreateProperty() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-2xl mx-auto space-y-6">
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
           <button 
             onClick={() => navigate("/dashboard/properties")} 
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm mb-4"
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
           >
-            <Icon icon="solar:arrow-left-bold" className="w-4 h-4" /> Back to properties
+            <Icon icon="solar:arrow-left-bold" className="w-4 h-4" /> Back
           </button>
-          <h1 className="text-2xl font-display font-bold">List New Property</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">
+          <h1 className="text-3xl font-light tracking-tight">List New Property</h1>
+          <p className="text-sm text-muted-foreground font-light mt-1">
             Fill in the details to list your property for approval
           </p>
         </motion.div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <motion.form 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          onSubmit={handleSubmit} 
+          className="space-y-5"
+        >
           {/* Title */}
           <FormField
             name="title"
@@ -400,20 +392,20 @@ export default function CreateProperty() {
           {/* Description */}
           <div>
             <label className="block text-sm font-medium mb-1.5">
-              Description <span className="text-destructive">*</span>
+              Description <span className="text-red-500">*</span>
             </label>
             <textarea
               value={form.description}
               onChange={e => handleChange("description", e.target.value)}
               placeholder="Describe the property in detail..."
               rows={4}
-              className={`w-full px-4 py-3 rounded-xl bg-muted text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-2 focus:ring-primary transition-all resize-none ${
-                errors.description || apiErrors.description ? "ring-2 ring-destructive" : ""
+              className={`w-full px-4 py-3 rounded-xl bg-muted/30 focus:bg-muted/50 transition-colors text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-2 focus:ring-primary resize-none ${
+                errors.description || apiErrors.description ? "ring-2 ring-red-500" : ""
               }`}
             />
-            {errors.description && <p className="text-destructive text-xs mt-1">{errors.description}</p>}
+            {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}
             {apiErrors.description && !errors.description && (
-              <p className="text-destructive text-xs mt-1">{apiErrors.description[0]}</p>
+              <p className="text-red-500 text-xs mt-1">{apiErrors.description[0]}</p>
             )}
           </div>
 
@@ -444,13 +436,13 @@ export default function CreateProperty() {
             />
             <div>
               <label className="block text-sm font-medium mb-1.5">
-                State <span className="text-destructive">*</span>
+                State <span className="text-red-500">*</span>
               </label>
               <select
                 value={form.state}
                 onChange={e => handleChange("state", e.target.value)}
-                className={`w-full px-4 py-3 rounded-xl bg-muted text-foreground text-sm outline-none focus:ring-2 focus:ring-primary transition-all ${
-                  errors.state || apiErrors.state ? "ring-2 ring-destructive" : ""
+                className={`w-full px-4 py-3 rounded-xl bg-muted/30 focus:bg-muted/50 transition-colors text-foreground text-sm outline-none focus:ring-2 focus:ring-primary ${
+                  errors.state || apiErrors.state ? "ring-2 ring-red-500" : ""
                 }`}
               >
                 <option value="">Select State</option>
@@ -458,9 +450,9 @@ export default function CreateProperty() {
                   <option key={state} value={state}>{state}</option>
                 ))}
               </select>
-              {errors.state && <p className="text-destructive text-xs mt-1">{errors.state}</p>}
+              {errors.state && <p className="text-red-500 text-xs mt-1">{errors.state}</p>}
               {apiErrors.state && !errors.state && (
-                <p className="text-destructive text-xs mt-1">{apiErrors.state[0]}</p>
+                <p className="text-red-500 text-xs mt-1">{apiErrors.state[0]}</p>
               )}
             </div>
           </div>
@@ -480,14 +472,14 @@ export default function CreateProperty() {
           {/* Property Type */}
           <div>
             <label className="block text-sm font-medium mb-1.5">
-              Property Type <span className="text-destructive">*</span>
+              Property Type <span className="text-red-500">*</span>
             </label>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {propertyTypeButtons}
             </div>
-            {errors.property_type && <p className="text-destructive text-xs mt-1">{errors.property_type}</p>}
+            {errors.property_type && <p className="text-red-500 text-xs mt-1">{errors.property_type}</p>}
             {apiErrors.property_type && !errors.property_type && (
-              <p className="text-destructive text-xs mt-1">{apiErrors.property_type[0]}</p>
+              <p className="text-red-500 text-xs mt-1">{apiErrors.property_type[0]}</p>
             )}
           </div>
 
@@ -539,19 +531,21 @@ export default function CreateProperty() {
           {/* Image Upload */}
           <div>
             <label className="block text-sm font-medium mb-1.5">
-              Property Images <span className="text-destructive">*</span>
+              Property Images <span className="text-red-500">*</span>
             </label>
             <div className="flex items-center justify-center w-full">
-              <label className={`w-full flex flex-col items-center justify-center px-4 py-6 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
+              <label className={`w-full flex flex-col items-center justify-center px-4 py-6 rounded-xl cursor-pointer transition-colors ${
                 errors.images || apiErrors.images 
-                  ? "border-destructive bg-destructive/5" 
-                  : "border-muted-foreground/30 hover:border-primary/50 bg-muted/30"
+                  ? "bg-red-500/5 ring-2 ring-red-500" 
+                  : "bg-muted/30 hover:bg-muted/50"
               }`}>
-                <Icon icon="solar:upload-bold" className="w-8 h-8 text-muted-foreground mb-2" />
+                <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-3">
+                  <Icon icon="solar:upload-bold" className="w-6 h-6 text-muted-foreground" />
+                </div>
                 <p className="text-sm text-muted-foreground">
-                  <span className="font-semibold text-primary">Click to upload</span> or drag and drop
+                  <span className="font-medium text-foreground">Click to upload</span> or drag and drop
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">PNG, JPG, WEBP (max 5MB each)</p>
+                <p className="text-xs text-muted-foreground/60 mt-1">PNG, JPG, WEBP (max 5MB each)</p>
                 <input
                   type="file"
                   accept="image/*"
@@ -562,9 +556,9 @@ export default function CreateProperty() {
               </label>
             </div>
             
-            {errors.images && <p className="text-destructive text-xs mt-1">{errors.images}</p>}
+            {errors.images && <p className="text-red-500 text-xs mt-1">{errors.images}</p>}
             {apiErrors.images && !errors.images && (
-              <p className="text-destructive text-xs mt-1">{apiErrors.images[0]}</p>
+              <p className="text-red-500 text-xs mt-1">{apiErrors.images[0]}</p>
             )}
             
             {/* Image Previews */}
@@ -573,7 +567,7 @@ export default function CreateProperty() {
                 {imagePreviews}
               </div>
             )}
-            <p className="text-xs text-muted-foreground mt-2">
+            <p className="text-xs text-muted-foreground/60 mt-2">
               {form.images.length} image{form.images.length !== 1 ? 's' : ''} selected
             </p>
           </div>
@@ -582,12 +576,12 @@ export default function CreateProperty() {
           <button 
             type="submit" 
             disabled={loading}
-            className="w-full py-4 bg-primary text-primary-foreground font-semibold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full py-3.5 bg-foreground text-background rounded-xl text-sm font-medium hover:opacity-80 disabled:opacity-30 flex items-center justify-center gap-2 transition-opacity"
           >
             {loading && <Icon icon="solar:refresh-bold" className="w-4 h-4 animate-spin" />}
-            {loading ? "Listing property..." : "List Property"}
+            {loading ? "Listing..." : "List Property"}
           </button>
-        </form>
+        </motion.form>
       </div>
     </DashboardLayout>
   );
