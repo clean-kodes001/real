@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Icon } from "@iconify/react";
 import { useLocation } from "wouter";
 import toast from "react-hot-toast";
@@ -33,7 +33,7 @@ interface Property {
   seller_phone: string;
 }
 
-// Filter options from your backend's property types
+// Filter options
 const PROPERTY_TYPES = ["All", "house", "apartment", "duplex", "bungalow", "commercial", "land"];
 const NIGERIAN_STATES = [
   "All", "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue", "Borno",
@@ -55,7 +55,6 @@ export default function Properties() {
   const [total, setTotal] = useState(0);
   const limit = 12;
 
-  // Fetch properties when page changes
   useEffect(() => {
     fetchProperties();
   }, [page]);
@@ -77,34 +76,35 @@ export default function Properties() {
     }
   }
 
-  // Client-side filtering
-  const filteredProperties = properties.filter((p) => {
-    // Search filter
-    const matchSearch = !search || 
-      p.title?.toLowerCase().includes(search.toLowerCase()) ||
-      p.city?.toLowerCase().includes(search.toLowerCase()) ||
-      p.state?.toLowerCase().includes(search.toLowerCase()) ||
-      p.address?.toLowerCase().includes(search.toLowerCase());
+  const filteredProperties = useMemo(() => {
+    return properties.filter((p) => {
+      const matchSearch = !search || 
+        p.title?.toLowerCase().includes(search.toLowerCase()) ||
+        p.city?.toLowerCase().includes(search.toLowerCase()) ||
+        p.state?.toLowerCase().includes(search.toLowerCase()) ||
+        p.address?.toLowerCase().includes(search.toLowerCase());
 
-    // Type filter
-    const matchType = type === "All" || p.property_type === type;
+      const matchType = type === "All" || p.property_type === type;
+      const matchLocation = location === "All" || 
+        p.city === location || 
+        p.state === location;
 
-    // Location filter
-    const matchLocation = location === "All" || 
-      p.city === location || 
-      p.state === location;
+      return matchSearch && matchType && matchLocation;
+    });
+  }, [properties, search, type, location]);
 
-    return matchSearch && matchType && matchLocation;
-  });
-
-  // Handle property click
   const handlePropertyClick = (uuid: string) => {
     navigate(`/property/${uuid}`);
   };
 
-  // Handle retry
   const handleRetry = () => {
     fetchProperties();
+  };
+
+  const clearFilters = () => {
+    setSearch("");
+    setType("All");
+    setLocation("All");
   };
 
   const totalPages = Math.ceil(total / limit);
@@ -114,18 +114,18 @@ export default function Properties() {
       <div className="max-w-6xl mx-auto px-6 py-10">
         {/* Header */}
         <motion.div 
-          initial={{ opacity: 0, y: 20 }} 
-          animate={{ opacity: 1, y: 0 }} 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="text-4xl font-display font-bold mb-2">Browse Properties</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-3xl font-light tracking-tight">Browse Properties</h1>
+          <p className="text-sm text-muted-foreground font-light mt-1">
             Find your perfect property from our verified listings across Nigeria
           </p>
         </motion.div>
 
         {/* Search and Filters */}
-        <div className="flex flex-col md:flex-row gap-3 mb-8">
+        <div className="flex flex-col md:flex-row gap-3 mb-6">
           <div className="relative flex-1">
             <Icon 
               icon="solar:magnifer-bold" 
@@ -135,14 +135,14 @@ export default function Properties() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by title, city, state, or address..."
-              className="w-full pl-10 pr-4 py-3 rounded-xl bg-muted text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-2 focus:ring-primary transition-all"
+              className="w-full pl-9 pr-4 py-2.5 bg-muted/30 focus:bg-muted/50 transition-colors rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary placeholder:text-muted-foreground/60"
             />
           </div>
 
           <select
             value={type}
             onChange={(e) => setType(e.target.value)}
-            className="px-4 py-3 rounded-xl bg-muted text-foreground text-sm outline-none focus:ring-2 focus:ring-primary transition-all min-w-[140px]"
+            className="px-4 py-2.5 bg-muted/30 focus:bg-muted/50 transition-colors rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary min-w-[140px]"
           >
             {PROPERTY_TYPES.map((t) => (
               <option key={t} value={t}>
@@ -154,7 +154,7 @@ export default function Properties() {
           <select
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            className="px-4 py-3 rounded-xl bg-muted text-foreground text-sm outline-none focus:ring-2 focus:ring-primary transition-all min-w-[150px]"
+            className="px-4 py-2.5 bg-muted/30 focus:bg-muted/50 transition-colors rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary min-w-[150px]"
           >
             {NIGERIAN_STATES.map((l) => (
               <option key={l} value={l}>
@@ -166,48 +166,46 @@ export default function Properties() {
 
         {/* Results count */}
         {!loading && !error && filteredProperties.length > 0 && (
-          <p className="text-sm text-muted-foreground mb-4">
-            Showing {filteredProperties.length} of {total} properties
+          <p className="text-xs text-muted-foreground/60 mb-4">
+            {filteredProperties.length} {filteredProperties.length === 1 ? 'property' : 'properties'}
             {search && ` matching "${search}"`}
           </p>
         )}
 
         {/* Error State */}
         {error ? (
-          <div className="text-center py-20">
-            <Icon icon="solar:danger-triangle-bold" className="w-12 h-12 text-destructive mx-auto mb-3" />
-            <p className="text-muted-foreground mb-4">{error}</p>
+          <div className="text-center py-16">
+            <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
+              <Icon icon="solar:danger-triangle-bold" className="w-6 h-6 text-red-500" />
+            </div>
+            <p className="text-muted-foreground text-sm">{error}</p>
             <button
               onClick={handleRetry}
-              className="px-6 py-2 bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition-opacity"
+              className="mt-4 px-6 py-2 bg-foreground text-background rounded-xl text-sm font-medium hover:opacity-80 transition-opacity"
             >
               Try Again
             </button>
           </div>
         ) : loading ? (
-          // Loading Skeletons
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array.from({ length: 6 }).map((_, i) => (
               <PropertyCardSkeleton key={i} />
             ))}
           </div>
         ) : filteredProperties.length === 0 ? (
-          // Empty State
-          <div className="text-center py-20">
-            <Icon icon="solar:buildings-bold" className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
-            <p className="font-semibold text-lg">No properties found</p>
-            <p className="text-muted-foreground text-sm mt-1">
+          <div className="text-center py-16">
+            <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-4">
+              <Icon icon="solar:buildings-bold" className="w-6 h-6 text-muted-foreground/40" />
+            </div>
+            <p className="font-light text-muted-foreground">No properties found</p>
+            <p className="text-sm text-muted-foreground/60 mt-1">
               {search || type !== "All" || location !== "All" 
                 ? "Try adjusting your search or filters" 
                 : "No properties are available right now"}
             </p>
             {(search || type !== "All" || location !== "All") && (
               <button
-                onClick={() => {
-                  setSearch("");
-                  setType("All");
-                  setLocation("All");
-                }}
+                onClick={clearFilters}
                 className="mt-4 text-sm text-primary hover:opacity-80 transition-opacity"
               >
                 Clear all filters
@@ -215,15 +213,15 @@ export default function Properties() {
             )}
           </div>
         ) : (
-          // Properties Grid
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredProperties.map((property) => (
+            {/* Properties Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredProperties.map((property, index) => (
                 <motion.div
                   key={property.uuid}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
+                  transition={{ delay: index * 0.04 }}
                   onClick={() => handlePropertyClick(property.uuid)}
                   className="cursor-pointer"
                 >
@@ -245,47 +243,48 @@ export default function Properties() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 mt-10">
+              <div className="flex items-center justify-center gap-2 mt-8">
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="p-2 rounded-xl bg-muted hover:bg-muted/80 disabled:opacity-40 transition-colors"
+                  className="p-2 rounded-xl bg-muted/30 hover:bg-muted/50 disabled:opacity-30 transition-colors"
                 >
                   <Icon icon="solar:arrow-left-bold" className="w-4 h-4" />
                 </button>
 
-                {/* Page numbers */}
-                {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
-                  let pg;
-                  if (totalPages <= 5) {
-                    pg = i + 1;
-                  } else if (page <= 3) {
-                    pg = i + 1;
-                  } else if (page >= totalPages - 2) {
-                    pg = totalPages - 4 + i;
-                  } else {
-                    pg = page - 2 + i;
-                  }
-                  
-                  return (
-                    <button
-                      key={pg}
-                      onClick={() => setPage(pg)}
-                      className={`w-9 h-9 rounded-xl text-sm font-medium transition-colors ${
-                        page === pg
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted hover:bg-muted/80"
-                      }`}
-                    >
-                      {pg}
-                    </button>
-                  );
-                })}
+                <div className="flex gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
+                    let pg;
+                    if (totalPages <= 5) {
+                      pg = i + 1;
+                    } else if (page <= 3) {
+                      pg = i + 1;
+                    } else if (page >= totalPages - 2) {
+                      pg = totalPages - 4 + i;
+                    } else {
+                      pg = page - 2 + i;
+                    }
+                    
+                    return (
+                      <button
+                        key={pg}
+                        onClick={() => setPage(pg)}
+                        className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
+                          page === pg
+                            ? "bg-foreground text-background"
+                            : "bg-muted/30 hover:bg-muted/50"
+                        }`}
+                      >
+                        {pg}
+                      </button>
+                    );
+                  })}
+                </div>
 
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
-                  className="p-2 rounded-xl bg-muted hover:bg-muted/80 disabled:opacity-40 transition-colors"
+                  className="p-2 rounded-xl bg-muted/30 hover:bg-muted/50 disabled:opacity-30 transition-colors"
                 >
                   <Icon icon="solar:arrow-right-bold" className="w-4 h-4" />
                 </button>
